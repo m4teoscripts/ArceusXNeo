@@ -100,15 +100,34 @@ local function PlayClick(enabled)
     end)
 end
 
+local RGBStrokes = {}
+local RGBRunning = false
+
 local function StartRGB(stroke, enabled)
     if not enabled or not stroke then return end
+
+    table.insert(RGBStrokes, stroke)
+
+    if RGBRunning then return end
+    RGBRunning = true
+
     task.spawn(function()
-        while stroke and stroke.Parent do
-            -- Un solo reloj RGB evita que cada borde tenga un color distinto.
+        while #RGBStrokes > 0 do
             local hue = (os.clock() * 0.12) % 1
-            stroke.Color = Color3.fromHSV(hue, 0.9, 1)
+            local color = Color3.fromHSV(hue, 0.9, 1)
+
+            for i = #RGBStrokes, 1, -1 do
+                local s = RGBStrokes[i]
+                if s and s.Parent then
+                    s.Color = color
+                else
+                    table.remove(RGBStrokes, i)
+                end
+            end
+
             task.wait()
         end
+        RGBRunning = false
     end)
 end
 
@@ -219,27 +238,9 @@ function ArceusUI:CreateWindow(options)
     if not ScreenGui.Parent then ScreenGui.Parent = PlayerGui end
     self.ScreenGui = ScreenGui
 
-    local borderSize = UDim2.new(
-        config.Size.X.Scale, config.Size.X.Offset + 2,
-        config.Size.Y.Scale, config.Size.Y.Offset + 2
-    )
-
-    -- Dedicated border container. Main no longer owns the RGB stroke,
-    -- so ClipsDescendants cannot cut the rounded exterior border.
-    local BorderFrame = Create("Frame", {
-        Name = "ExteriorBorder",
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = config.Position,
-        Size = UDim2.fromOffset(0, 0),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ClipsDescendants = false,
-        ZIndex = 1
-    }, ScreenGui)
-    Corner(BorderFrame, 13)
-    local BorderStroke = Stroke(BorderFrame, Color3.fromRGB(100, 100, 100), 2)
-    StartRGB(BorderStroke, config.RGB)
-
+    -- Un único borde exterior para la ventana.
+    -- El borde pertenece a la misma GUI para que las esquinas queden
+    -- perfectamente alineadas y no haya dos rectángulos superpuestos.
     local Main = Create("Frame", {
         Name = "Main",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -251,6 +252,9 @@ function ArceusUI:CreateWindow(options)
         ZIndex = 2
     }, ScreenGui)
     Corner(Main, 12)
+
+    local MainStroke = Stroke(Main, Color3.fromRGB(100, 100, 100), 2)
+    StartRGB(MainStroke, config.RGB)
 
     ----------------------------------------------------------------
     -- TOP BAR
@@ -431,7 +435,6 @@ function ArceusUI:CreateWindow(options)
                 startPosition.Y.Offset + delta.Y
             )
             Main.Position = newPosition
-            BorderFrame.Position = newPosition
         end
     end)
 
@@ -439,9 +442,7 @@ function ArceusUI:CreateWindow(options)
     -- OPEN ANIMATION
     ----------------------------------------------------------------
     Main.Size = UDim2.fromOffset(20, 20)
-    BorderFrame.Size = UDim2.fromOffset(24, 24)
     Tween(Main, {Size = config.Size}, 0.38, Enum.EasingStyle.Back)
-    Tween(BorderFrame, {Size = borderSize}, 0.38, Enum.EasingStyle.Back)
 
 
     local minimized = false
@@ -456,11 +457,9 @@ function ArceusUI:CreateWindow(options)
         minimized = true
 
         Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
-        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
         task.wait(0.25)
 
         Main.Visible = false
-        BorderFrame.Visible = false
         MiniButton.Visible = true
         MiniButton.Size = UDim2.fromOffset(0, 0)
         Tween(MiniButton, {Size = UDim2.fromOffset(50, 50)}, 0.28, Enum.EasingStyle.Back)
@@ -474,11 +473,8 @@ function ArceusUI:CreateWindow(options)
         PlayClick(config.Sounds)
         MiniButton.Visible = false
         Main.Visible = true
-        BorderFrame.Visible = true
         Main.Size = UDim2.fromOffset(0, 0)
-        BorderFrame.Size = UDim2.fromOffset(4, 4)
         Tween(Main, {Size = config.Size}, 0.32, Enum.EasingStyle.Back)
-        Tween(BorderFrame, {Size = borderSize}, 0.32, Enum.EasingStyle.Back)
         minimized = false
     end)
 
@@ -490,7 +486,6 @@ function ArceusUI:CreateWindow(options)
         PlayClick(config.Sounds)
         closed = true
         Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
-        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
         task.wait(0.25)
         if ScreenGui then ScreenGui:Destroy() end
     end)
@@ -498,7 +493,7 @@ function ArceusUI:CreateWindow(options)
     local Window = {}
     Window.Main = Main
     Window.ScreenGui = ScreenGui
-    Window.Border = BorderFrame
+    Window.Border = MainStroke
     Window.Tabs = {}
     Window.ActiveTab = nil
     Window.Profile = ProfileCard
