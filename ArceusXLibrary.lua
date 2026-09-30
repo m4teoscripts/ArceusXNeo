@@ -263,9 +263,10 @@ function ArceusUI:CreateWindow(options)
         Name = "TopBar",
         BackgroundColor3 = Color3.fromRGB(31, 31, 35),
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 62),
+        Size = UDim2.new(1, -4, 0, 60),
         ZIndex = 3
     }, Main)
+    Corner(TopBar, 10)
 
     local Title = Create("TextLabel", {
         BackgroundTransparency = 1,
@@ -345,8 +346,8 @@ function ArceusUI:CreateWindow(options)
         Name = "TabBar",
         BackgroundColor3 = Color3.fromRGB(28, 28, 32),
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 62),
-        Size = UDim2.new(1, 0, 0, 40),
+        Position = UDim2.fromOffset(2, 62),
+        Size = UDim2.new(1, -4, 0, 40),
         ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.X,
