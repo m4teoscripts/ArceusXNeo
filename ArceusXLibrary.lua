@@ -29,7 +29,10 @@ local DEFAULTS = {
     Subtitle = "Arceus X UI Library",
     Size = UDim2.fromOffset(520, 360),
     Position = UDim2.fromScale(0.5, 0.5),
-    RGB = true,
+    RGB = false,
+    BorderColor = Color3.fromRGB(75, 75, 82),
+    BorderThickness = 1.5,
+    BorderRadius = 14,
     Sounds = true,
     AnimationSpeed = 0.22,
     ShowProfile = true,
@@ -251,9 +254,9 @@ function ArceusUI:CreateWindow(options)
         ClipsDescendants = true,
         ZIndex = 2
     }, ScreenGui)
-    Corner(Main, 12)
+    Corner(Main, config.BorderRadius)
 
-    local MainStroke = Stroke(Main, Color3.fromRGB(100, 100, 100), 2)
+    local MainStroke = Stroke(Main, config.BorderColor, config.BorderThickness)
     StartRGB(MainStroke, config.RGB)
 
     ----------------------------------------------------------------
@@ -263,11 +266,10 @@ function ArceusUI:CreateWindow(options)
         Name = "TopBar",
         BackgroundColor3 = Color3.fromRGB(31, 31, 35),
         BorderSizePixel = 0,
-        Size = UDim2.new(1, -4, 0, 60),
+        Position = UDim2.fromOffset(2, 2),
+        Size = UDim2.new(1, -4, 0, 56),
         ZIndex = 3
     }, Main)
-    Corner(TopBar, 10)
-
     local Title = Create("TextLabel", {
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(18, 10),
@@ -346,7 +348,7 @@ function ArceusUI:CreateWindow(options)
         Name = "TabBar",
         BackgroundColor3 = Color3.fromRGB(28, 28, 32),
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(2, 62),
+        Position = UDim2.fromOffset(2, 60),
         Size = UDim2.new(1, -4, 0, 40),
         ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -399,7 +401,7 @@ function ArceusUI:CreateWindow(options)
         ZIndex = 50
     }, ScreenGui)
     Corner(MiniButton, 14)
-    local MiniStroke = Stroke(MiniButton, Color3.fromRGB(100, 100, 100), 1.5)
+    local MiniStroke = Stroke(MiniButton, config.BorderColor, config.BorderThickness)
     StartRGB(MiniStroke, config.RGB)
 
     ----------------------------------------------------------------
@@ -936,8 +938,8 @@ function ArceusUI:CreateWindow(options)
                 Visible = false,
                 ZIndex = 80
             }, ScreenGui)
-            Corner(Modal, 10)
-            local ModalStroke = Stroke(Modal, Color3.fromRGB(100, 100, 100), 1.5)
+            Corner(Modal, 14)
+            local ModalStroke = Stroke(Modal, config.BorderColor, config.BorderThickness)
             StartRGB(ModalStroke, config.RGB)
 
             Create("TextLabel", {
