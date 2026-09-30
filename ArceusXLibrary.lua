@@ -1,5 +1,17 @@
 --[[
-Arceus UI Library By MateoScripts
+    ArceusXLibrary.lua
+    Modern lightweight Roblox UI library
+
+    Features:
+    - Window / Tabs / scrolling content
+    - Button / Toggle / Slider / Dropdown
+    - ColorPicker with preview + Aceptar/Cancelar
+    - Notifications
+    - Minimize / Close / Dragging
+    - Smooth animations + click sounds
+    - RGB exterior border (not individual controls)
+    - Bottom-left profile card with avatar + DisplayName + @Username
+    - Mobile / PC friendly
 ]]
 
 local ArceusUI = {}
@@ -562,6 +574,12 @@ function ArceusUI:CreateWindow(options)
     -- CREATE TAB
     ----------------------------------------------------------------
     function Window:CreateTab(tabName)
+        -- Compatibility: accept both CreateTab("Player") and CreateTab({Name = "Player"})
+        if type(tabName) == "table" then
+            tabName = tabName.Name or tabName.Title or "Tab"
+        end
+        tabName = tostring(tabName or "Tab")
+
         local TabButton = Create("TextButton", {
             BackgroundColor3 = Color3.fromRGB(38, 38, 43),
             AutoButtonColor = false,
