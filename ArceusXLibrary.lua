@@ -120,6 +120,21 @@ local function StartRGB(stroke, enabled)
     end)
 end
 
+-- RGB for filled frames. Used for the exterior border so the border
+-- stays perfectly even around rounded corners instead of relying on UIStroke.
+local function StartRGBFrame(frame, enabled)
+    if not enabled or not frame then return end
+    task.spawn(function()
+        local hue = 0
+        while frame and frame.Parent do
+            hue += 0.004
+            if hue > 1 then hue = 0 end
+            frame.BackgroundColor3 = Color3.fromHSV(hue, 0.9, 1)
+            task.wait()
+        end
+    end)
+end
+
 local function GetAvatar(imageOverride)
     if imageOverride and imageOverride ~= "" then
         return imageOverride
@@ -241,21 +256,20 @@ function ArceusUI:CreateWindow(options)
         config.Size.Y.Scale, config.Size.Y.Offset + 4
     )
 
-    -- Dedicated border container. Main no longer owns the RGB stroke,
-    -- so ClipsDescendants cannot cut the rounded exterior border.
+    -- Exterior border is a filled rounded frame behind Main.
+    -- This avoids UIStroke corner artifacts and keeps a uniform 2px border.
     local BorderFrame = Create("Frame", {
         Name = "ExteriorBorder",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = config.Position,
         Size = UDim2.fromOffset(0, 0),
-        BackgroundTransparency = 1,
+        BackgroundColor3 = Color3.fromRGB(100, 100, 100),
         BorderSizePixel = 0,
-        ClipsDescendants = false,
+        ClipsDescendants = true,
         ZIndex = 1
     }, ScreenGui)
     Corner(BorderFrame, 14)
-    local BorderStroke = Stroke(BorderFrame, Color3.fromRGB(100, 100, 100), 2)
-    StartRGB(BorderStroke, config.RGB)
+    StartRGBFrame(BorderFrame, config.RGB)
 
     local Main = Create("Frame", {
         Name = "Main",
