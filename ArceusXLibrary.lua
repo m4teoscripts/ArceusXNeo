@@ -1108,7 +1108,7 @@ function ArceusUI:CreateWindow(options)
 
             local PreviewBox = Create("Frame", {
                 BackgroundColor3 = currentColor,
-                Position = UDim2.fromOffset(15, 160),
+                Position = UDim2.fromOffset(15, 145),
                 Size = UDim2.new(1, -30, 0, 30),
                 ZIndex = 81
             }, Modal)
@@ -1179,7 +1179,7 @@ function ArceusUI:CreateWindow(options)
 
             local Cancel = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(48, 48, 53),
-                Position = UDim2.new(0, 15, 1, -47),
+                Position = UDim2.new(0, 15, 1, -42),
                 Size = UDim2.fromOffset(105, 32),
                 AutoButtonColor = false,
                 Font = Enum.Font.GothamMedium,
@@ -1192,7 +1192,7 @@ function ArceusUI:CreateWindow(options)
 
             local Accept = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(65, 65, 72),
-                Position = UDim2.new(1, -120, 1, -47),
+                Position = UDim2.new(1, -120, 1, -42),
                 Size = UDim2.fromOffset(105, 32),
                 AutoButtonColor = false,
                 Font = Enum.Font.GothamMedium,
@@ -1221,7 +1221,7 @@ function ArceusUI:CreateWindow(options)
                 Modal.Visible = true
                 Modal.Size = UDim2.fromOffset(0, 0)
                 ModalScale.Scale = 0.88
-                Tween(Modal, {Size = UDim2.fromOffset(310, 225)}, 0.30, Enum.EasingStyle.Back)
+                Tween(Modal, {Size = UDim2.fromOffset(310, 230)}, 0.30, Enum.EasingStyle.Back)
                 Tween(ModalScale, {Scale = 1}, 0.34, Enum.EasingStyle.Back)
             end)
             Cancel.MouseButton1Click:Connect(function()
