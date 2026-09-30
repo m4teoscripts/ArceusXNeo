@@ -31,8 +31,8 @@ local DEFAULTS = {
     Position = UDim2.fromScale(0.5, 0.5),
     RGB = false,
     BorderColor = Color3.fromRGB(75, 75, 82),
-    BorderThickness = 1.5,
-    BorderRadius = 14,
+    BorderThickness = 1,
+    BorderRadius = 16,
     Sounds = true,
     AnimationSpeed = 0.22,
     ShowProfile = true,
@@ -264,10 +264,10 @@ function ArceusUI:CreateWindow(options)
     ----------------------------------------------------------------
     local TopBar = Create("Frame", {
         Name = "TopBar",
-        BackgroundColor3 = Color3.fromRGB(31, 31, 35),
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(2, 2),
-        Size = UDim2.new(1, -4, 0, 56),
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(1, 0, 0, 58),
         ZIndex = 3
     }, Main)
     local Title = Create("TextLabel", {
@@ -309,8 +309,9 @@ function ArceusUI:CreateWindow(options)
 
     local HeaderStatus = Create("Frame", {
         BackgroundColor3 = Color3.fromRGB(90, 205, 120),
-        Position = UDim2.new(1, -84, 0, 37),
-        Size = UDim2.fromOffset(7, 7),
+        Position = UDim2.new(1, -83, 0, 35),
+        Size = UDim2.fromOffset(8, 8),
+        BorderSizePixel = 0,
         ZIndex = 6
     }, TopBar)
     Corner(HeaderStatus, 4)
@@ -346,7 +347,7 @@ function ArceusUI:CreateWindow(options)
     ----------------------------------------------------------------
     local TabBar = Create("ScrollingFrame", {
         Name = "TabBar",
-        BackgroundColor3 = Color3.fromRGB(28, 28, 32),
+        BackgroundTransparency = 1,
         BorderSizePixel = 0,
         Position = UDim2.fromOffset(2, 60),
         Size = UDim2.new(1, -4, 0, 40),
