@@ -103,10 +103,9 @@ end
 local function StartRGB(stroke, enabled)
     if not enabled or not stroke then return end
     task.spawn(function()
-        local hue = 0
         while stroke and stroke.Parent do
-            hue += 0.004
-            if hue > 1 then hue = 0 end
+            -- Un solo reloj RGB evita que cada borde tenga un color distinto.
+            local hue = (os.clock() * 0.12) % 1
             stroke.Color = Color3.fromHSV(hue, 0.9, 1)
             task.wait()
         end
@@ -267,7 +266,7 @@ function ArceusUI:CreateWindow(options)
     local Title = Create("TextLabel", {
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(18, 10),
-        Size = UDim2.new(1, -130, 0, 22),
+        Size = UDim2.new(1, -150, 0, 22),
         Font = Enum.Font.GothamBold,
         Text = config.Name,
         TextColor3 = Color3.new(1, 1, 1),
@@ -279,7 +278,7 @@ function ArceusUI:CreateWindow(options)
     local Subtitle = Create("TextLabel", {
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(18, 32),
-        Size = UDim2.new(1, -130, 0, 18),
+        Size = UDim2.new(1, -150, 0, 18),
         Font = Enum.Font.Gotham,
         Text = config.Subtitle,
         TextColor3 = Color3.fromRGB(150, 150, 155),
@@ -287,6 +286,21 @@ function ArceusUI:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 4
     }, TopBar)
+
+    -- Botón UI colocado entre el nombre y el botón minimizar.
+    local UIButton = Create("TextButton", {
+        Name = "UIButton",
+        BackgroundColor3 = Color3.fromRGB(45, 45, 50),
+        Position = UDim2.new(1, -102, 0, 14),
+        Size = UDim2.fromOffset(24, 24),
+        AutoButtonColor = false,
+        Font = Enum.Font.GothamBold,
+        Text = "UI",
+        TextColor3 = Color3.fromRGB(220, 220, 220),
+        TextSize = 9,
+        ZIndex = 5
+    }, TopBar)
+    Corner(UIButton, 7)
 
     local Minimize = Create("TextButton", {
         BackgroundColor3 = Color3.fromRGB(45, 45, 50),
@@ -508,6 +522,22 @@ function ArceusUI:CreateWindow(options)
     -- MINIMIZE
     ----------------------------------------------------------------
     Minimize.MouseButton1Click:Connect(function()
+        if closed or minimized then return end
+        PlayClick(config.Sounds)
+        minimized = true
+
+        Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
+        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
+        task.wait(0.25)
+
+        Main.Visible = false
+        BorderFrame.Visible = false
+        MiniButton.Visible = true
+        MiniButton.Size = UDim2.fromOffset(0, 0)
+        Tween(MiniButton, {Size = UDim2.fromOffset(50, 50)}, 0.28, Enum.EasingStyle.Back)
+    end)
+
+    UIButton.MouseButton1Click:Connect(function()
         if closed or minimized then return end
         PlayClick(config.Sounds)
         minimized = true
@@ -1018,8 +1048,8 @@ function ArceusUI:CreateWindow(options)
 
             local PreviewBox = Create("Frame", {
                 BackgroundColor3 = currentColor,
-                Position = UDim2.fromOffset(15, 160),
-                Size = UDim2.new(1, -30, 0, 30),
+                Position = UDim2.fromOffset(15, 148),
+                Size = UDim2.new(1, -30, 0, 34),
                 ZIndex = 81
             }, Modal)
             Corner(PreviewBox, 7)
@@ -1036,6 +1066,18 @@ function ArceusUI:CreateWindow(options)
                     ZIndex = 82
                 }, Modal)
 
+                local valueLabel = Create("TextLabel", {
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(1, -42, 0, y),
+                    Size = UDim2.fromOffset(27, 20),
+                    Font = Enum.Font.GothamMedium,
+                    Text = tostring(initial),
+                    TextColor3 = Color3.fromRGB(180, 180, 185),
+                    TextSize = 10,
+                    TextXAlignment = Enum.TextXAlignment.Right,
+                    ZIndex = 82
+                }, Modal)
+
                 local bar = Create("Frame", {
                     BackgroundColor3 = Color3.fromRGB(55, 55, 60),
                     Position = UDim2.fromOffset(45, y + 6),
@@ -1045,7 +1087,10 @@ function ArceusUI:CreateWindow(options)
                 Corner(bar, 5)
 
                 local fill = Create("Frame", {
-                    BackgroundColor3 = Color3.fromRGB(120, 120, 125),
+                    BackgroundColor3 =
+                        name == "R" and Color3.fromRGB(220, 70, 70)
+                        or name == "G" and Color3.fromRGB(70, 210, 100)
+                        or Color3.fromRGB(75, 145, 255),
                     Size = UDim2.new(initial / 255, 0, 1, 0),
                     ZIndex = 83
                 }, bar)
@@ -1057,8 +1102,9 @@ function ArceusUI:CreateWindow(options)
                         (input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X,
                         0, 1
                     )
-                    local value = math.floor(percent * 255)
+                    local value = math.floor(percent * 255 + 0.5)
                     Tween(fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.05)
+                    valueLabel.Text = tostring(value)
                     callback(value)
                     PreviewBox.BackgroundColor3 = Color3.fromRGB(R, G, B)
                 end
@@ -1090,7 +1136,7 @@ function ArceusUI:CreateWindow(options)
             local Cancel = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(48, 48, 53),
                 Position = UDim2.new(0, 15, 1, -47),
-                Size = UDim2.fromOffset(105, 32),
+                Size = UDim2.fromOffset(120, 34),
                 AutoButtonColor = false,
                 Font = Enum.Font.GothamMedium,
                 Text = "Cancelar",
@@ -1102,8 +1148,8 @@ function ArceusUI:CreateWindow(options)
 
             local Accept = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(65, 65, 72),
-                Position = UDim2.new(1, -120, 1, -47),
-                Size = UDim2.fromOffset(105, 32),
+                Position = UDim2.new(1, -135, 1, -49),
+                Size = UDim2.fromOffset(120, 34),
                 AutoButtonColor = false,
                 Font = Enum.Font.GothamMedium,
                 Text = "Aceptar",
@@ -1123,7 +1169,7 @@ function ArceusUI:CreateWindow(options)
                 PlayClick(config.Sounds)
                 Modal.Visible = true
                 Modal.Size = UDim2.fromOffset(0, 0)
-                Tween(Modal, {Size = UDim2.fromOffset(310, 225)}, 0.28, Enum.EasingStyle.Back)
+                Tween(Modal, {Size = UDim2.fromOffset(330, 235)}, 0.28, Enum.EasingStyle.Back)
             end)
             Cancel.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
