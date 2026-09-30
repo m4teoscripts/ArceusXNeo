@@ -10,7 +10,7 @@
     - Minimize / Close / Dragging
     - Smooth animations + click sounds
     - RGB exterior border (not individual controls)
-    - Bottom-left profile card with avatar + DisplayName + @Username
+    - Header profile avatar between library name and minimize
     - Mobile / PC friendly
 ]]
 
@@ -220,8 +220,8 @@ function ArceusUI:CreateWindow(options)
     self.ScreenGui = ScreenGui
 
     local borderSize = UDim2.new(
-        config.Size.X.Scale, config.Size.X.Offset + 4,
-        config.Size.Y.Scale, config.Size.Y.Offset + 4
+        config.Size.X.Scale, config.Size.X.Offset + 2,
+        config.Size.Y.Scale, config.Size.Y.Offset + 2
     )
 
     -- Dedicated border container. Main no longer owns the RGB stroke,
@@ -236,7 +236,7 @@ function ArceusUI:CreateWindow(options)
         ClipsDescendants = false,
         ZIndex = 1
     }, ScreenGui)
-    Corner(BorderFrame, 14)
+    Corner(BorderFrame, 13)
     local BorderStroke = Stroke(BorderFrame, Color3.fromRGB(100, 100, 100), 2)
     StartRGB(BorderStroke, config.RGB)
 
@@ -266,7 +266,7 @@ function ArceusUI:CreateWindow(options)
     local Title = Create("TextLabel", {
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(18, 10),
-        Size = UDim2.new(1, -150, 0, 22),
+        Size = UDim2.new(1, -160, 0, 22),
         Font = Enum.Font.GothamBold,
         Text = config.Name,
         TextColor3 = Color3.new(1, 1, 1),
@@ -278,7 +278,7 @@ function ArceusUI:CreateWindow(options)
     local Subtitle = Create("TextLabel", {
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(18, 32),
-        Size = UDim2.new(1, -150, 0, 18),
+        Size = UDim2.new(1, -160, 0, 18),
         Font = Enum.Font.Gotham,
         Text = config.Subtitle,
         TextColor3 = Color3.fromRGB(150, 150, 155),
@@ -287,20 +287,26 @@ function ArceusUI:CreateWindow(options)
         ZIndex = 4
     }, TopBar)
 
-    -- Botón UI colocado entre el nombre y el botón minimizar.
-    local UIButton = Create("TextButton", {
-        Name = "UIButton",
-        BackgroundColor3 = Color3.fromRGB(45, 45, 50),
-        Position = UDim2.new(1, -102, 0, 14),
-        Size = UDim2.fromOffset(24, 24),
-        AutoButtonColor = false,
-        Font = Enum.Font.GothamBold,
-        Text = "UI",
-        TextColor3 = Color3.fromRGB(220, 220, 220),
-        TextSize = 9,
+    -- Foto de perfil del usuario entre el nombre y los controles.
+    -- Es una imagen, NO un botón de texto.
+    local HeaderProfile = Create("ImageLabel", {
+        Name = "HeaderProfile",
+        BackgroundColor3 = Color3.fromRGB(20, 20, 23),
+        Position = UDim2.new(1, -108, 0, 15),
+        Size = UDim2.fromOffset(28, 28),
+        Image = GetAvatar(config.ProfileImage),
+        ScaleType = Enum.ScaleType.Crop,
         ZIndex = 5
     }, TopBar)
-    Corner(UIButton, 7)
+    Corner(HeaderProfile, 14)
+
+    local HeaderStatus = Create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(90, 205, 120),
+        Position = UDim2.new(1, -84, 0, 37),
+        Size = UDim2.fromOffset(7, 7),
+        ZIndex = 6
+    }, TopBar)
+    Corner(HeaderStatus, 4)
 
     local Minimize = Create("TextButton", {
         BackgroundColor3 = Color3.fromRGB(45, 45, 50),
@@ -361,82 +367,14 @@ function ArceusUI:CreateWindow(options)
     }, Main)
 
     ----------------------------------------------------------------
-    -- PROFILE CARD - BOTTOM LEFT
+    -- PROFILE API
     ----------------------------------------------------------------
-    local ProfileCard
-    local ProfileAvatar
-    local ProfileDisplay
-    local ProfileUsername
-
-    if config.ShowProfile ~= false then
-        ProfileCard = Create("Frame", {
-            Name = "ProfileCard",
-            AnchorPoint = Vector2.new(0, 1),
-            Position = UDim2.new(0, 12, 1, -10),
-            Size = UDim2.fromOffset(205, 52),
-            BackgroundColor3 = Color3.fromRGB(31, 31, 35),
-            BackgroundTransparency = 0.04,
-            BorderSizePixel = 0,
-            ZIndex = 20
-        }, Main)
-        Corner(ProfileCard, 12)
-        Stroke(ProfileCard, Color3.fromRGB(55, 55, 62), 1)
-
-        local AvatarHolder = Create("Frame", {
-            BackgroundColor3 = Color3.fromRGB(20, 20, 23),
-            Position = UDim2.fromOffset(7, 6),
-            Size = UDim2.fromOffset(40, 40),
-            ZIndex = 21
-        }, ProfileCard)
-        Corner(AvatarHolder, 20)
-        Stroke(AvatarHolder, Color3.fromRGB(80, 80, 88), 1)
-
-        ProfileAvatar = Create("ImageLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(2, 2),
-            Size = UDim2.fromOffset(36, 36),
-            Image = GetAvatar(config.ProfileImage),
-            ScaleType = Enum.ScaleType.Crop,
-            ImageTransparency = 1,
-            ZIndex = 22
-        }, AvatarHolder)
-        Corner(ProfileAvatar, 18)
-
-        ProfileDisplay = Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(56, 8),
-            Size = UDim2.new(1, -65, 0, 18),
-            Font = Enum.Font.GothamBold,
-            Text = config.ProfileName or LocalPlayer.DisplayName,
-            TextColor3 = Color3.new(1, 1, 1),
-            TextSize = 12,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextTransparency = 1,
-            ZIndex = 22
-        }, ProfileCard)
-
-        ProfileUsername = Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(56, 27),
-            Size = UDim2.new(1, -65, 0, 15),
-            Font = Enum.Font.Gotham,
-            Text = config.ProfileUsername or ("@" .. LocalPlayer.Name),
-            TextColor3 = Color3.fromRGB(150, 150, 155),
-            TextSize = 10,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextTransparency = 1,
-            ZIndex = 22
-        }, ProfileCard)
-
-        local Status = Create("Frame", {
-            BackgroundColor3 = Color3.fromRGB(90, 205, 120),
-            Position = UDim2.fromOffset(35, 35),
-            Size = UDim2.fromOffset(9, 9),
-            ZIndex = 23
-        }, AvatarHolder)
-        Corner(Status, 5)
-        Stroke(Status, Color3.fromRGB(25, 25, 28), 1)
-    end
+    -- The profile avatar is displayed in the header, between the title
+    -- and the minimize button. There is intentionally no bottom profile card.
+    local ProfileCard = nil
+    local ProfileAvatar = HeaderProfile
+    local ProfileDisplay = nil
+    local ProfileUsername = nil
 
     ----------------------------------------------------------------
     -- MINIMIZED BUTTON
@@ -505,15 +443,6 @@ function ArceusUI:CreateWindow(options)
     Tween(Main, {Size = config.Size}, 0.38, Enum.EasingStyle.Back)
     Tween(BorderFrame, {Size = borderSize}, 0.38, Enum.EasingStyle.Back)
 
-    if ProfileCard then
-        ProfileCard.Position = UDim2.new(0, 12, 1, 10)
-        Tween(ProfileCard, {Position = UDim2.new(0, 12, 1, -10)}, 0.45, Enum.EasingStyle.Quint)
-        task.delay(0.12, function()
-            Tween(ProfileAvatar, {ImageTransparency = 0}, 0.28)
-            Tween(ProfileDisplay, {TextTransparency = 0}, 0.28)
-            Tween(ProfileUsername, {TextTransparency = 0}, 0.35)
-        end)
-    end
 
     local minimized = false
     local closed = false
@@ -522,22 +451,6 @@ function ArceusUI:CreateWindow(options)
     -- MINIMIZE
     ----------------------------------------------------------------
     Minimize.MouseButton1Click:Connect(function()
-        if closed or minimized then return end
-        PlayClick(config.Sounds)
-        minimized = true
-
-        Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
-        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
-        task.wait(0.25)
-
-        Main.Visible = false
-        BorderFrame.Visible = false
-        MiniButton.Visible = true
-        MiniButton.Size = UDim2.fromOffset(0, 0)
-        Tween(MiniButton, {Size = UDim2.fromOffset(50, 50)}, 0.28, Enum.EasingStyle.Back)
-    end)
-
-    UIButton.MouseButton1Click:Connect(function()
         if closed or minimized then return end
         PlayClick(config.Sounds)
         minimized = true
@@ -594,10 +507,11 @@ function ArceusUI:CreateWindow(options)
     -- PROFILE METHODS
     ----------------------------------------------------------------
     function Window:SetProfile(displayName, username, image)
-        if not ProfileCard then return end
-        if displayName ~= nil then ProfileDisplay.Text = tostring(displayName) end
-        if username ~= nil then ProfileUsername.Text = tostring(username) end
-        if image ~= nil then ProfileAvatar.Image = tostring(image) end
+        -- Header-only profile. DisplayName/username are optional and are kept
+        -- for API compatibility; the visible element is the avatar.
+        if image ~= nil and ProfileAvatar then
+            ProfileAvatar.Image = tostring(image)
+        end
     end
 
     ----------------------------------------------------------------
@@ -1054,6 +968,11 @@ function ArceusUI:CreateWindow(options)
             }, Modal)
             Corner(PreviewBox, 7)
 
+            local function UpdatePreview()
+                local color = Color3.fromRGB(R, G, B)
+                PreviewBox.BackgroundColor3 = color
+            end
+
             local function MakeRGBSlider(name, y, initial, callback)
                 Create("TextLabel", {
                     BackgroundTransparency = 1,
@@ -1106,7 +1025,7 @@ function ArceusUI:CreateWindow(options)
                     Tween(fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.05)
                     valueLabel.Text = tostring(value)
                     callback(value)
-                    PreviewBox.BackgroundColor3 = Color3.fromRGB(R, G, B)
+                    UpdatePreview()
                 end
                 bar.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1
