@@ -63,6 +63,13 @@ local function Tween(object, properties, duration, style, direction)
     return tween
 end
 
+local function AddScale(parent, initial)
+    local scale = Create("UIScale", {
+        Scale = initial or 1
+    }, parent)
+    return scale
+end
+
 local function Corner(parent, radius)
     return Create("UICorner", {
         CornerRadius = UDim.new(0, radius or 8)
@@ -156,13 +163,14 @@ function ArceusUI:Notify(data)
 
     local notification = Create("Frame", {
         BackgroundColor3 = Color3.fromRGB(30, 30, 34),
-        BackgroundTransparency = 0.04,
+        BackgroundTransparency = 1,
         Size = UDim2.fromOffset(285, 70),
-        Position = UDim2.fromOffset(320, 0),
         ZIndex = 101
     }, holder)
     Corner(notification, 9)
     Stroke(notification, Color3.fromRGB(75, 75, 80), 1)
+
+    local scale = AddScale(notification, 0.88)
 
     local titleLabel = Create("TextLabel", {
         BackgroundTransparency = 1,
@@ -171,6 +179,7 @@ function ArceusUI:Notify(data)
         Font = Enum.Font.GothamBold,
         Text = data.Title or "ArceusUI",
         TextColor3 = Color3.new(1, 1, 1),
+        TextTransparency = 1,
         TextSize = 14,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 102
@@ -183,25 +192,32 @@ function ArceusUI:Notify(data)
         Font = Enum.Font.Gotham,
         Text = data.Content or "",
         TextColor3 = Color3.fromRGB(175, 175, 180),
+        TextTransparency = 1,
         TextSize = 12,
         TextWrapped = true,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 102
     }, notification)
 
-    Tween(notification, {Position = UDim2.fromOffset(0, 0)}, 0.3)
+    Tween(notification, {BackgroundTransparency = 0.04}, 0.18)
+    Tween(scale, {Scale = 1}, 0.32, Enum.EasingStyle.Back)
+    Tween(titleLabel, {TextTransparency = 0}, 0.2)
+    Tween(contentLabel, {TextTransparency = 0}, 0.25)
 
     task.delay(data.Duration or 3, function()
         if notification and notification.Parent then
-            Tween(notification, {
-                Position = UDim2.fromOffset(320, 0),
-                BackgroundTransparency = 1
-            }, 0.25)
-            task.wait(0.3)
-            if notification then notification:Destroy() end
+            Tween(scale, {Scale = 0.88}, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(notification, {BackgroundTransparency = 1}, 0.22)
+            Tween(titleLabel, {TextTransparency = 1}, 0.18)
+            Tween(contentLabel, {TextTransparency = 1}, 0.18)
+            task.wait(0.25)
+            if notification and notification.Parent then
+                notification:Destroy()
+            end
         end
     end)
 end
+
 
 function ArceusUI:CreateWindow(options)
     options = options or {}
@@ -300,6 +316,7 @@ function ArceusUI:CreateWindow(options)
         ZIndex = 5
     }, TopBar)
     Corner(Minimize, 7)
+    local MinScale = AddScale(Minimize, 1)
 
     local Close = Create("TextButton", {
         BackgroundColor3 = Color3.fromRGB(45, 45, 50),
@@ -313,6 +330,27 @@ function ArceusUI:CreateWindow(options)
         ZIndex = 5
     }, TopBar)
     Corner(Close, 7)
+    local CloseScale = AddScale(Close, 1)
+
+    for button, scale in pairs({
+        [Minimize] = MinScale,
+        [Close] = CloseScale
+    }) do
+        button.MouseEnter:Connect(function()
+            Tween(button, {BackgroundColor3 = Color3.fromRGB(58, 58, 65)}, 0.12)
+            Tween(scale, {Scale = 1.06}, 0.12, Enum.EasingStyle.Back)
+        end)
+        button.MouseLeave:Connect(function()
+            Tween(button, {BackgroundColor3 = Color3.fromRGB(45, 45, 50)}, 0.12)
+            Tween(scale, {Scale = 1}, 0.12)
+        end)
+        button.MouseButton1Down:Connect(function()
+            Tween(scale, {Scale = 0.88}, 0.07)
+        end)
+        button.MouseButton1Up:Connect(function()
+            Tween(scale, {Scale = 1.06}, 0.14, Enum.EasingStyle.Back)
+        end)
+    end
 
     ----------------------------------------------------------------
     -- TAB BAR
@@ -342,7 +380,8 @@ function ArceusUI:CreateWindow(options)
         Name = "Content",
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(0, 102),
-        Size = UDim2.new(1, 0, 1, -102),
+        -- Reserve a footer so the profile never covers controls.
+        Size = UDim2.new(1, 0, 1, -166),
         ZIndex = 3
     }, Main)
 
@@ -363,7 +402,7 @@ function ArceusUI:CreateWindow(options)
             BackgroundColor3 = Color3.fromRGB(31, 31, 35),
             BackgroundTransparency = 0.04,
             BorderSizePixel = 0,
-            ZIndex = 20
+            ZIndex = 8
         }, Main)
         Corner(ProfileCard, 12)
         Stroke(ProfileCard, Color3.fromRGB(55, 55, 62), 1)
@@ -492,8 +531,10 @@ function ArceusUI:CreateWindow(options)
     Tween(BorderFrame, {Size = borderSize}, 0.38, Enum.EasingStyle.Back)
 
     if ProfileCard then
-        ProfileCard.Position = UDim2.new(0, 12, 1, 10)
+        local ProfileScale = AddScale(ProfileCard, 0.92)
+        ProfileCard.Position = UDim2.new(0, 12, 1, 8)
         Tween(ProfileCard, {Position = UDim2.new(0, 12, 1, -10)}, 0.45, Enum.EasingStyle.Quint)
+        Tween(ProfileScale, {Scale = 1}, 0.42, Enum.EasingStyle.Back)
         task.delay(0.12, function()
             Tween(ProfileAvatar, {ImageTransparency = 0}, 0.28)
             Tween(ProfileDisplay, {TextTransparency = 0}, 0.28)
@@ -585,6 +626,7 @@ function ArceusUI:CreateWindow(options)
             ZIndex = 4
         }, TabBar)
         Corner(TabButton, 7)
+        local TabScale = AddScale(TabButton, 1)
 
         local Page = Create("ScrollingFrame", {
             Name = tostring(tabName) .. "_Page",
@@ -627,8 +669,20 @@ function ArceusUI:CreateWindow(options)
             Window.ActiveTab = Tab
         end
 
+        TabButton.MouseButton1Down:Connect(function()
+            Tween(TabScale, {Scale = 0.96}, 0.07)
+        end)
+        TabButton.MouseButton1Up:Connect(function()
+            Tween(TabScale, {Scale = 1}, 0.14, Enum.EasingStyle.Back)
+        end)
         TabButton.MouseButton1Click:Connect(function()
             PlayClick(config.Sounds)
+            Tween(TabScale, {Scale = 0.97}, 0.06)
+            task.delay(0.07, function()
+                if TabScale and TabScale.Parent then
+                    Tween(TabScale, {Scale = 1}, 0.14, Enum.EasingStyle.Back)
+                end
+            end)
             Activate()
         end)
 
@@ -661,18 +715,31 @@ function ArceusUI:CreateWindow(options)
                 ZIndex = 5
             }, Page)
             Corner(Button, 8)
+            local ButtonScale = AddScale(Button, 1)
 
             Button.MouseEnter:Connect(function()
                 Tween(Button, {BackgroundColor3 = Color3.fromRGB(45, 45, 50)}, 0.15)
+                Tween(ButtonScale, {Scale = 1.015}, 0.12, Enum.EasingStyle.Quad)
             end)
             Button.MouseLeave:Connect(function()
                 Tween(Button, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.15)
+                Tween(ButtonScale, {Scale = 1}, 0.12, Enum.EasingStyle.Quad)
             end)
             Button.MouseButton1Down:Connect(function()
                 Tween(Button, {BackgroundColor3 = Color3.fromRGB(55, 55, 62)}, 0.08)
+                Tween(ButtonScale, {Scale = 0.965}, 0.08, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+            end)
+            Button.MouseButton1Up:Connect(function()
+                Tween(ButtonScale, {Scale = 1.015}, 0.12, Enum.EasingStyle.Back)
             end)
             Button.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
+                Tween(ButtonScale, {Scale = 0.985}, 0.06)
+                task.delay(0.07, function()
+                    if ButtonScale and ButtonScale.Parent then
+                        Tween(ButtonScale, {Scale = 1.015}, 0.12, Enum.EasingStyle.Back)
+                    end
+                end)
                 if data.Callback then task.spawn(data.Callback) end
             end)
             return Button
@@ -712,6 +779,7 @@ function ArceusUI:CreateWindow(options)
                 ZIndex = 6
             }, Holder)
             Corner(Switch, 11)
+            local SwitchScale = AddScale(Switch, 1)
 
             local Knob = Create("Frame", {
                 BackgroundColor3 = Color3.new(1, 1, 1),
@@ -724,14 +792,35 @@ function ArceusUI:CreateWindow(options)
             local Toggle = {}
             function Toggle:Set(newValue)
                 value = newValue == true
+
+                Tween(SwitchScale, {
+                    Scale = 0.86
+                }, 0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
                 Tween(Switch, {
                     BackgroundColor3 = value and Color3.fromRGB(80, 150, 95) or Color3.fromRGB(60, 60, 65)
-                }, 0.15)
+                }, 0.18, Enum.EasingStyle.Quint)
+
                 Tween(Knob, {
                     Position = value and UDim2.new(1, -20, 0.5, -8) or UDim2.fromOffset(4, 3)
-                }, 0.15)
+                }, 0.22, Enum.EasingStyle.Back)
+
+                Tween(SwitchScale, {
+                    Scale = 1
+                }, 0.22, Enum.EasingStyle.Back)
+
+                Tween(Holder, {
+                    BackgroundColor3 = value and Color3.fromRGB(38, 44, 40) or Color3.fromRGB(35, 35, 40)
+                }, 0.18)
+
                 if data.Callback then task.spawn(data.Callback, value) end
             end
+            Switch.MouseButton1Down:Connect(function()
+                Tween(SwitchScale, {Scale = 0.86}, 0.08, Enum.EasingStyle.Quad)
+            end)
+            Switch.MouseButton1Up:Connect(function()
+                Tween(SwitchScale, {Scale = 1}, 0.16, Enum.EasingStyle.Back)
+            end)
             Switch.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
                 Toggle:Set(not value)
@@ -796,12 +885,26 @@ function ArceusUI:CreateWindow(options)
             }, Bar)
             Corner(Fill, 5)
 
+            local Knob = Create("Frame", {
+                BackgroundColor3 = Color3.fromRGB(235, 235, 240),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.new(percentage, 0, 0.5, 0),
+                Size = UDim2.fromOffset(13, 13),
+                ZIndex = 8
+            }, Bar)
+            Corner(Knob, 7)
+            local KnobScale = AddScale(Knob, 1)
+
             local draggingSlider = false
             local function SetValue(value)
                 current = math.clamp(value, min, max)
                 local percent = (current - min) / (max - min)
                 ValueLabel.Text = tostring(math.floor(current))
-                Tween(Fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.08)
+                Tween(Fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.10, Enum.EasingStyle.Quint)
+                Tween(Knob, {Position = UDim2.new(percent, 0, 0.5, 0)}, 0.10, Enum.EasingStyle.Quint)
+                if draggingSlider then
+                    Tween(KnobScale, {Scale = 1.18}, 0.08, Enum.EasingStyle.Back)
+                end
                 if data.Callback then task.spawn(data.Callback, current) end
             end
             local function UpdateFromInput(input)
@@ -853,6 +956,7 @@ function ArceusUI:CreateWindow(options)
                 ZIndex = 5
             }, Page)
             Corner(Holder, 8)
+            local HolderScale = AddScale(Holder, 1)
 
             local MainButton = Create("TextButton", {
                 BackgroundTransparency = 1,
@@ -889,6 +993,15 @@ function ArceusUI:CreateWindow(options)
                         ZIndex = 7
                     }, OptionHolder)
                     Corner(Option, 6)
+                    local OptionScale = AddScale(Option, 1)
+                    Option.MouseEnter:Connect(function()
+                        Tween(Option, {BackgroundColor3 = Color3.fromRGB(55, 55, 62)}, 0.12)
+                        Tween(OptionScale, {Scale = 1.01}, 0.10)
+                    end)
+                    Option.MouseLeave:Connect(function()
+                        Tween(Option, {BackgroundColor3 = Color3.fromRGB(45, 45, 50)}, 0.12)
+                        Tween(OptionScale, {Scale = 1}, 0.10)
+                    end)
                     Option.MouseButton1Click:Connect(function()
                         PlayClick(config.Sounds)
                         selected = option
@@ -901,11 +1014,17 @@ function ArceusUI:CreateWindow(options)
             end
             Rebuild()
 
+            MainButton.MouseButton1Down:Connect(function()
+                Tween(HolderScale, {Scale = 0.985}, 0.07)
+            end)
+            MainButton.MouseButton1Up:Connect(function()
+                Tween(HolderScale, {Scale = 1}, 0.14, Enum.EasingStyle.Back)
+            end)
             MainButton.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
                 opened = not opened
                 local height = opened and (52 + (#options * 35)) or 44
-                Tween(Holder, {Size = UDim2.new(1, 0, 0, height)}, 0.2)
+                Tween(Holder, {Size = UDim2.new(1, 0, 0, height)}, 0.28, Enum.EasingStyle.Quint)
             end)
 
             local Dropdown = {}
@@ -956,6 +1075,7 @@ function ArceusUI:CreateWindow(options)
                 ZIndex = 6
             }, Holder)
             Corner(Preview, 7)
+            local PreviewScale = AddScale(Preview, 1)
 
             local Modal = Create("Frame", {
                 BackgroundColor3 = Color3.fromRGB(27, 27, 31),
@@ -966,6 +1086,7 @@ function ArceusUI:CreateWindow(options)
                 ZIndex = 80
             }, ScreenGui)
             Corner(Modal, 10)
+            local ModalScale = AddScale(Modal, 0.88)
             local ModalStroke = Stroke(Modal, Color3.fromRGB(100, 100, 100), 1.5)
             StartRGB(ModalStroke, config.RGB)
 
@@ -1083,16 +1204,25 @@ function ArceusUI:CreateWindow(options)
             Corner(Accept, 7)
 
             local function CloseModal()
-                Tween(Modal, {Size = UDim2.fromOffset(0, 0)}, 0.2)
-                task.wait(0.2)
+                Tween(ModalScale, {Scale = 0.88}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+                Tween(Modal, {Size = UDim2.fromOffset(0, 0)}, 0.20, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+                task.wait(0.21)
                 Modal.Visible = false
             end
 
+            Preview.MouseButton1Down:Connect(function()
+                Tween(PreviewScale, {Scale = 0.9}, 0.08)
+            end)
+            Preview.MouseButton1Up:Connect(function()
+                Tween(PreviewScale, {Scale = 1}, 0.16, Enum.EasingStyle.Back)
+            end)
             Preview.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
                 Modal.Visible = true
                 Modal.Size = UDim2.fromOffset(0, 0)
-                Tween(Modal, {Size = UDim2.fromOffset(310, 225)}, 0.28, Enum.EasingStyle.Back)
+                ModalScale.Scale = 0.88
+                Tween(Modal, {Size = UDim2.fromOffset(310, 225)}, 0.30, Enum.EasingStyle.Back)
+                Tween(ModalScale, {Scale = 1}, 0.34, Enum.EasingStyle.Back)
             end)
             Cancel.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
