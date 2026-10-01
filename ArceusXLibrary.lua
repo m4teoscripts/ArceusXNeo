@@ -10,7 +10,7 @@
     - Minimize / Close / Dragging
     - Smooth animations + click sounds
     - RGB exterior border (not individual controls)
-    - Header profile avatar between library name and minimize
+    - Bottom-left profile card with avatar + DisplayName + @Username
     - Mobile / PC friendly
 ]]
 
@@ -29,20 +29,15 @@ local DEFAULTS = {
     Subtitle = "Arceus X UI Library",
     Size = UDim2.fromOffset(520, 360),
     Position = UDim2.fromScale(0.5, 0.5),
-    RGB = false,
-    BorderColor = Color3.fromRGB(75, 75, 82),
-    BorderThickness = 1,
-    BorderRadius = 16,
+    RGB = true,
     Sounds = true,
     AnimationSpeed = 0.22,
     ShowProfile = true,
     ProfileName = nil,
     ProfileUsername = nil,
     ProfileImage = nil,
-    KeySystem = false,
-    Theme = "Midnight",
     ConfigFolder = "ArceusX",
-    Watermark = false,
+    KeySystem = false,
 }
 
 local Library = { Windows = {} }
@@ -107,34 +102,16 @@ local function PlayClick(enabled)
     end)
 end
 
-local RGBStrokes = {}
-local RGBRunning = false
-
 local function StartRGB(stroke, enabled)
     if not enabled or not stroke then return end
-
-    table.insert(RGBStrokes, stroke)
-
-    if RGBRunning then return end
-    RGBRunning = true
-
     task.spawn(function()
-        while #RGBStrokes > 0 do
-            local hue = (os.clock() * 0.12) % 1
-            local color = Color3.fromHSV(hue, 0.9, 1)
-
-            for i = #RGBStrokes, 1, -1 do
-                local s = RGBStrokes[i]
-                if s and s.Parent then
-                    s.Color = color
-                else
-                    table.remove(RGBStrokes, i)
-                end
-            end
-
+        local hue = 0
+        while stroke and stroke.Parent do
+            hue += 0.004
+            if hue > 1 then hue = 0 end
+            stroke.Color = Color3.fromHSV(hue, 0.9, 1)
             task.wait()
         end
-        RGBRunning = false
     end)
 end
 
@@ -228,61 +205,6 @@ function ArceusUI:Notify(data)
     end)
 end
 
-
-----------------------------------------------------------------
--- EXTENDED FEATURES
-----------------------------------------------------------------
-local THEMES = {
-    Midnight = {Background=Color3.fromRGB(25,25,28), Surface=Color3.fromRGB(35,35,40), Button=Color3.fromRGB(45,45,50), Text=Color3.fromRGB(245,245,245), SubText=Color3.fromRGB(155,155,160), Border=Color3.fromRGB(70,70,75), Accent=Color3.fromRGB(125,80,255)},
-    Ocean = {Background=Color3.fromRGB(18,25,32), Surface=Color3.fromRGB(25,36,46), Button=Color3.fromRGB(33,48,60), Text=Color3.fromRGB(240,248,255), SubText=Color3.fromRGB(145,175,195), Border=Color3.fromRGB(60,120,150), Accent=Color3.fromRGB(45,170,255)},
-    Purple = {Background=Color3.fromRGB(27,20,35), Surface=Color3.fromRGB(40,30,50), Button=Color3.fromRGB(55,40,68), Text=Color3.fromRGB(248,242,255), SubText=Color3.fromRGB(175,155,190), Border=Color3.fromRGB(115,75,150), Accent=Color3.fromRGB(160,90,255)},
-    Crimson = {Background=Color3.fromRGB(32,19,22), Surface=Color3.fromRGB(47,28,32), Button=Color3.fromRGB(64,36,42), Text=Color3.fromRGB(255,242,244), SubText=Color3.fromRGB(190,150,155), Border=Color3.fromRGB(130,55,65), Accent=Color3.fromRGB(235,65,85)},
-    Emerald = {Background=Color3.fromRGB(18,30,25), Surface=Color3.fromRGB(27,44,36), Button=Color3.fromRGB(37,58,47), Text=Color3.fromRGB(240,255,248), SubText=Color3.fromRGB(145,180,160), Border=Color3.fromRGB(55,125,90), Accent=Color3.fromRGB(60,210,135)},
-    Rose = {Background=Color3.fromRGB(32,21,28), Surface=Color3.fromRGB(48,31,42), Button=Color3.fromRGB(65,40,55), Text=Color3.fromRGB(255,245,250), SubText=Color3.fromRGB(195,160,180), Border=Color3.fromRGB(135,75,105), Accent=Color3.fromRGB(255,95,170)},
-    Sunset = {Background=Color3.fromRGB(34,24,18), Surface=Color3.fromRGB(50,35,25), Button=Color3.fromRGB(70,47,30), Text=Color3.fromRGB(255,248,238), SubText=Color3.fromRGB(195,165,135), Border=Color3.fromRGB(145,85,45), Accent=Color3.fromRGB(255,145,55)},
-    Amoled = {Background=Color3.fromRGB(0,0,0), Surface=Color3.fromRGB(12,12,12), Button=Color3.fromRGB(22,22,22), Text=Color3.fromRGB(250,250,250), SubText=Color3.fromRGB(145,145,145), Border=Color3.fromRGB(55,55,55), Accent=Color3.fromRGB(255,255,255)},
-    Cyber = {Background=Color3.fromRGB(10,17,20), Surface=Color3.fromRGB(15,28,31), Button=Color3.fromRGB(20,42,45), Text=Color3.fromRGB(235,255,255), SubText=Color3.fromRGB(120,180,180), Border=Color3.fromRGB(35,130,135), Accent=Color3.fromRGB(0,255,210)},
-    Monochrome = {Background=Color3.fromRGB(30,30,30), Surface=Color3.fromRGB(45,45,45), Button=Color3.fromRGB(60,60,60), Text=Color3.fromRGB(245,245,245), SubText=Color3.fromRGB(175,175,175), Border=Color3.fromRGB(110,110,110), Accent=Color3.fromRGB(220,220,220)},
-}
-
-local function SameColor(a,b)
-    return a and b and math.abs(a.R-b.R)<0.002 and math.abs(a.G-b.G)<0.002 and math.abs(a.B-b.B)<0.002
-end
-
-local function ApplyThemeToGui(root, theme)
-    local oldSurface = Color3.fromRGB(35,35,40)
-    local oldButton = Color3.fromRGB(45,45,50)
-    local oldBackground = Color3.fromRGB(25,25,28)
-    local oldSub = Color3.fromRGB(150,150,155)
-    local oldText = Color3.new(1,1,1)
-    for _,obj in ipairs(root:GetDescendants()) do
-        if obj:IsA("UIStroke") then
-            if SameColor(obj.Color, Color3.fromRGB(70,70,75)) or SameColor(obj.Color, Color3.fromRGB(55,55,60)) then obj.Color=theme.Border end
-        elseif obj:IsA("TextButton") then
-            if SameColor(obj.BackgroundColor3, oldButton) or SameColor(obj.BackgroundColor3, oldSurface) then obj.BackgroundColor3=theme.Button end
-            if SameColor(obj.TextColor3, oldText) or SameColor(obj.TextColor3, Color3.fromRGB(220,220,220)) then obj.TextColor3=theme.Text end
-        elseif obj:IsA("TextLabel") then
-            if SameColor(obj.TextColor3, oldText) then obj.TextColor3=theme.Text
-            elseif SameColor(obj.TextColor3, oldSub) or SameColor(obj.TextColor3, Color3.fromRGB(175,175,180)) then obj.TextColor3=theme.SubText end
-        elseif obj:IsA("Frame") then
-            if SameColor(obj.BackgroundColor3, oldBackground) then obj.BackgroundColor3=theme.Background
-            elseif SameColor(obj.BackgroundColor3, oldSurface) then obj.BackgroundColor3=theme.Surface
-            elseif SameColor(obj.BackgroundColor3, oldButton) then obj.BackgroundColor3=theme.Button end
-        end
-    end
-end
-
-local function EncodeConfig(data)
-    local HttpService=game:GetService("HttpService")
-    return HttpService:JSONEncode(data or {})
-end
-
-local function DecodeConfig(raw)
-    local HttpService=game:GetService("HttpService")
-    local ok,result=pcall(function() return HttpService:JSONDecode(raw) end)
-    return ok and result or nil
-end
-
 function ArceusUI:CreateWindow(options)
     options = options or {}
     local config = {}
@@ -300,9 +222,27 @@ function ArceusUI:CreateWindow(options)
     if not ScreenGui.Parent then ScreenGui.Parent = PlayerGui end
     self.ScreenGui = ScreenGui
 
-    -- Un único borde exterior para la ventana.
-    -- El borde pertenece a la misma GUI para que las esquinas queden
-    -- perfectamente alineadas y no haya dos rectángulos superpuestos.
+    local borderSize = UDim2.new(
+        config.Size.X.Scale, config.Size.X.Offset + 4,
+        config.Size.Y.Scale, config.Size.Y.Offset + 4
+    )
+
+    -- Dedicated border container. Main no longer owns the RGB stroke,
+    -- so ClipsDescendants cannot cut the rounded exterior border.
+    local BorderFrame = Create("Frame", {
+        Name = "ExteriorBorder",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = config.Position,
+        Size = UDim2.fromOffset(0, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ClipsDescendants = false,
+        ZIndex = 1
+    }, ScreenGui)
+    Corner(BorderFrame, 14)
+    local BorderStroke = Stroke(BorderFrame, Color3.fromRGB(100, 100, 100), 2)
+    StartRGB(BorderStroke, config.RGB)
+
     local Main = Create("Frame", {
         Name = "Main",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -313,26 +253,23 @@ function ArceusUI:CreateWindow(options)
         ClipsDescendants = true,
         ZIndex = 2
     }, ScreenGui)
-    Corner(Main, config.BorderRadius)
-
-    local MainStroke = Stroke(Main, config.BorderColor, config.BorderThickness)
-    StartRGB(MainStroke, config.RGB)
+    Corner(Main, 12)
 
     ----------------------------------------------------------------
     -- TOP BAR
     ----------------------------------------------------------------
     local TopBar = Create("Frame", {
         Name = "TopBar",
-        BackgroundTransparency = 1,
+        BackgroundColor3 = Color3.fromRGB(31, 31, 35),
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 0),
-        Size = UDim2.new(1, 0, 0, 58),
+        Size = UDim2.new(1, 0, 0, 62),
         ZIndex = 3
     }, Main)
+
     local Title = Create("TextLabel", {
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(18, 10),
-        Size = UDim2.new(1, -160, 0, 22),
+        Size = UDim2.new(1, -130, 0, 22),
         Font = Enum.Font.GothamBold,
         Text = config.Name,
         TextColor3 = Color3.new(1, 1, 1),
@@ -344,7 +281,7 @@ function ArceusUI:CreateWindow(options)
     local Subtitle = Create("TextLabel", {
         BackgroundTransparency = 1,
         Position = UDim2.fromOffset(18, 32),
-        Size = UDim2.new(1, -160, 0, 18),
+        Size = UDim2.new(1, -130, 0, 18),
         Font = Enum.Font.Gotham,
         Text = config.Subtitle,
         TextColor3 = Color3.fromRGB(150, 150, 155),
@@ -352,28 +289,6 @@ function ArceusUI:CreateWindow(options)
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 4
     }, TopBar)
-
-    -- Foto de perfil del usuario entre el nombre y los controles.
-    -- Es una imagen, NO un botón de texto.
-    local HeaderProfile = Create("ImageLabel", {
-        Name = "HeaderProfile",
-        BackgroundColor3 = Color3.fromRGB(20, 20, 23),
-        Position = UDim2.new(1, -108, 0, 15),
-        Size = UDim2.fromOffset(28, 28),
-        Image = GetAvatar(config.ProfileImage),
-        ScaleType = Enum.ScaleType.Crop,
-        ZIndex = 5
-    }, TopBar)
-    Corner(HeaderProfile, 14)
-
-    local HeaderStatus = Create("Frame", {
-        BackgroundColor3 = Color3.fromRGB(90, 205, 120),
-        Position = UDim2.new(1, -83, 0, 35),
-        Size = UDim2.fromOffset(8, 8),
-        BorderSizePixel = 0,
-        ZIndex = 6
-    }, TopBar)
-    Corner(HeaderStatus, 4)
 
     local Minimize = Create("TextButton", {
         BackgroundColor3 = Color3.fromRGB(45, 45, 50),
@@ -402,14 +317,50 @@ function ArceusUI:CreateWindow(options)
     Corner(Close, 7)
 
     ----------------------------------------------------------------
+    -- SEARCH
+    ----------------------------------------------------------------
+    local SearchBox = Create("TextBox", {
+        Name = "SearchBox",
+        BackgroundColor3 = Color3.fromRGB(40, 40, 45),
+        Position = UDim2.new(1, -106, 0, 12),
+        Size = UDim2.fromOffset(28, 28),
+        ClearTextOnFocus = false,
+        PlaceholderText = "⌕",
+        PlaceholderColor3 = Color3.fromRGB(125, 125, 130),
+        Text = "",
+        TextColor3 = Color3.fromRGB(235, 235, 238),
+        Font = Enum.Font.Gotham,
+        TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 5
+    }, TopBar)
+    Corner(SearchBox, 8)
+    Stroke(SearchBox, Color3.fromRGB(65, 65, 72), 1)
+    local searchExpanded = false
+    SearchBox.Focused:Connect(function()
+        searchExpanded = true
+        Tween(SearchBox, {Position = UDim2.new(1, -154, 0, 12), Size = UDim2.fromOffset(72, 28)}, 0.18)
+        SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+        SearchBox.PlaceholderText = "Search"
+    end)
+    SearchBox.FocusLost:Connect(function()
+        if SearchBox.Text == "" then
+            searchExpanded = false
+            SearchBox.TextXAlignment = Enum.TextXAlignment.Center
+            SearchBox.PlaceholderText = "⌕"
+            Tween(SearchBox, {Position = UDim2.new(1, -106, 0, 12), Size = UDim2.fromOffset(28, 28)}, 0.18)
+        end
+    end)
+
+    ----------------------------------------------------------------
     -- TAB BAR
     ----------------------------------------------------------------
     local TabBar = Create("ScrollingFrame", {
         Name = "TabBar",
-        BackgroundTransparency = 1,
+        BackgroundColor3 = Color3.fromRGB(28, 28, 32),
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(2, 60),
-        Size = UDim2.new(1, -4, 0, 40),
+        Position = UDim2.fromOffset(0, 62),
+        Size = UDim2.new(1, 0, 0, 40),
         ScrollBarThickness = 0,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.X,
@@ -434,14 +385,82 @@ function ArceusUI:CreateWindow(options)
     }, Main)
 
     ----------------------------------------------------------------
-    -- PROFILE API
+    -- PROFILE CARD - BOTTOM LEFT
     ----------------------------------------------------------------
-    -- The profile avatar is displayed in the header, between the title
-    -- and the minimize button. There is intentionally no bottom profile card.
-    local ProfileCard = nil
-    local ProfileAvatar = HeaderProfile
-    local ProfileDisplay = nil
-    local ProfileUsername = nil
+    local ProfileCard
+    local ProfileAvatar
+    local ProfileDisplay
+    local ProfileUsername
+
+    if config.ShowProfile ~= false then
+        ProfileCard = Create("Frame", {
+            Name = "ProfileCard",
+            AnchorPoint = Vector2.new(0, 1),
+            Position = UDim2.new(0, 12, 1, -10),
+            Size = UDim2.fromOffset(205, 52),
+            BackgroundColor3 = Color3.fromRGB(31, 31, 35),
+            BackgroundTransparency = 0.04,
+            BorderSizePixel = 0,
+            ZIndex = 20
+        }, Main)
+        Corner(ProfileCard, 12)
+        Stroke(ProfileCard, Color3.fromRGB(55, 55, 62), 1)
+
+        local AvatarHolder = Create("Frame", {
+            BackgroundColor3 = Color3.fromRGB(20, 20, 23),
+            Position = UDim2.fromOffset(7, 6),
+            Size = UDim2.fromOffset(40, 40),
+            ZIndex = 21
+        }, ProfileCard)
+        Corner(AvatarHolder, 20)
+        Stroke(AvatarHolder, Color3.fromRGB(80, 80, 88), 1)
+
+        ProfileAvatar = Create("ImageLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(2, 2),
+            Size = UDim2.fromOffset(36, 36),
+            Image = GetAvatar(config.ProfileImage),
+            ScaleType = Enum.ScaleType.Crop,
+            ImageTransparency = 1,
+            ZIndex = 22
+        }, AvatarHolder)
+        Corner(ProfileAvatar, 18)
+
+        ProfileDisplay = Create("TextLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(56, 8),
+            Size = UDim2.new(1, -65, 0, 18),
+            Font = Enum.Font.GothamBold,
+            Text = config.ProfileName or LocalPlayer.DisplayName,
+            TextColor3 = Color3.new(1, 1, 1),
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTransparency = 1,
+            ZIndex = 22
+        }, ProfileCard)
+
+        ProfileUsername = Create("TextLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(56, 27),
+            Size = UDim2.new(1, -65, 0, 15),
+            Font = Enum.Font.Gotham,
+            Text = config.ProfileUsername or ("@" .. LocalPlayer.Name),
+            TextColor3 = Color3.fromRGB(150, 150, 155),
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextTransparency = 1,
+            ZIndex = 22
+        }, ProfileCard)
+
+        local Status = Create("Frame", {
+            BackgroundColor3 = Color3.fromRGB(90, 205, 120),
+            Position = UDim2.fromOffset(35, 35),
+            Size = UDim2.fromOffset(9, 9),
+            ZIndex = 23
+        }, AvatarHolder)
+        Corner(Status, 5)
+        Stroke(Status, Color3.fromRGB(25, 25, 28), 1)
+    end
 
     ----------------------------------------------------------------
     -- MINIMIZED BUTTON
@@ -461,7 +480,7 @@ function ArceusUI:CreateWindow(options)
         ZIndex = 50
     }, ScreenGui)
     Corner(MiniButton, 14)
-    local MiniStroke = Stroke(MiniButton, config.BorderColor, config.BorderThickness)
+    local MiniStroke = Stroke(MiniButton, Color3.fromRGB(100, 100, 100), 1.5)
     StartRGB(MiniStroke, config.RGB)
 
     ----------------------------------------------------------------
@@ -498,6 +517,7 @@ function ArceusUI:CreateWindow(options)
                 startPosition.Y.Offset + delta.Y
             )
             Main.Position = newPosition
+            BorderFrame.Position = newPosition
         end
     end)
 
@@ -505,8 +525,19 @@ function ArceusUI:CreateWindow(options)
     -- OPEN ANIMATION
     ----------------------------------------------------------------
     Main.Size = UDim2.fromOffset(20, 20)
+    BorderFrame.Size = UDim2.fromOffset(24, 24)
     Tween(Main, {Size = config.Size}, 0.38, Enum.EasingStyle.Back)
+    Tween(BorderFrame, {Size = borderSize}, 0.38, Enum.EasingStyle.Back)
 
+    if ProfileCard then
+        ProfileCard.Position = UDim2.new(0, 12, 1, 10)
+        Tween(ProfileCard, {Position = UDim2.new(0, 12, 1, -10)}, 0.45, Enum.EasingStyle.Quint)
+        task.delay(0.12, function()
+            Tween(ProfileAvatar, {ImageTransparency = 0}, 0.28)
+            Tween(ProfileDisplay, {TextTransparency = 0}, 0.28)
+            Tween(ProfileUsername, {TextTransparency = 0}, 0.35)
+        end)
+    end
 
     local minimized = false
     local closed = false
@@ -520,9 +551,11 @@ function ArceusUI:CreateWindow(options)
         minimized = true
 
         Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
+        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
         task.wait(0.25)
 
         Main.Visible = false
+        BorderFrame.Visible = false
         MiniButton.Visible = true
         MiniButton.Size = UDim2.fromOffset(0, 0)
         Tween(MiniButton, {Size = UDim2.fromOffset(50, 50)}, 0.28, Enum.EasingStyle.Back)
@@ -536,8 +569,11 @@ function ArceusUI:CreateWindow(options)
         PlayClick(config.Sounds)
         MiniButton.Visible = false
         Main.Visible = true
+        BorderFrame.Visible = true
         Main.Size = UDim2.fromOffset(0, 0)
+        BorderFrame.Size = UDim2.fromOffset(4, 4)
         Tween(Main, {Size = config.Size}, 0.32, Enum.EasingStyle.Back)
+        Tween(BorderFrame, {Size = borderSize}, 0.32, Enum.EasingStyle.Back)
         minimized = false
     end)
 
@@ -549,6 +585,7 @@ function ArceusUI:CreateWindow(options)
         PlayClick(config.Sounds)
         closed = true
         Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
+        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
         task.wait(0.25)
         if ScreenGui then ScreenGui:Destroy() end
     end)
@@ -556,23 +593,35 @@ function ArceusUI:CreateWindow(options)
     local Window = {}
     Window.Main = Main
     Window.ScreenGui = ScreenGui
-    Window.Border = MainStroke
+    Window.Border = BorderFrame
     Window.Tabs = {}
     Window.ActiveTab = nil
     Window.Profile = ProfileCard
+    Window.ConfigRegistry = {}
+    Window.ConfigFolder = config.ConfigFolder or "ArceusX"
 
-    Window._ConfigItems = {}
+    ----------------------------------------------------------------
+    -- CONFIG / SEARCH
+    ----------------------------------------------------------------
     function Window:RegisterConfig(key, getter, setter)
-        if type(key) ~= "string" or key == "" then return end
-        self._ConfigItems[key] = {Get=getter, Set=setter}
+        if not key or type(getter) ~= "function" then return end
+        self.ConfigRegistry[tostring(key)] = {Get = getter, Set = setter}
     end
 
     function Window:GetConfig()
-        local data={}
-        for key,item in pairs(self._ConfigItems) do
-            if item.Get then
-                local ok,value=pcall(item.Get)
-                if ok then data[key]=value end
+        local data = {}
+        for key, entry in pairs(self.ConfigRegistry) do
+            local ok, value = pcall(entry.Get)
+            if ok then
+                if typeof(value) == "Color3" then
+                    data[key] = {__type="Color3", R=value.R, G=value.G, B=value.B}
+                elseif type(value) == "table" then
+                    local copy = {}
+                    for k,v in pairs(value) do copy[k]=v end
+                    data[key] = copy
+                else
+                    data[key] = value
+                end
             end
         end
         return data
@@ -581,73 +630,78 @@ function ArceusUI:CreateWindow(options)
     function Window:ApplyConfig(data)
         if type(data) ~= "table" then return false end
         for key,value in pairs(data) do
-            local item=self._ConfigItems[key]
-            if item and item.Set then pcall(item.Set,value) end
+            local entry=self.ConfigRegistry[tostring(key)]
+            if entry and type(entry.Set)=="function" then
+                if type(value)=="table" and value.__type=="Color3" then
+                    value=Color3.new(value.R or 1,value.G or 1,value.B or 1)
+                end
+                pcall(entry.Set,value)
+            end
         end
         return true
     end
 
     function Window:SaveConfig(name)
-        name=tostring(name or "Default")
-        local data=self:GetConfig()
-        if not (writefile and readfile) then return false,"Executor file API unavailable" end
-        pcall(function() if makefolder and not isfolder(config.ConfigFolder) then makefolder(config.ConfigFolder) end end)
-        local path=config.ConfigFolder.."/"..name..".json"
-        local ok,err=pcall(function() writefile(path,EncodeConfig(data)) end)
-        return ok,err
+        name=tostring(name or "default"):gsub("[^%w_%-]","_")
+        local folder=self.ConfigFolder
+        local path=folder.."/"..name..".json"
+        if type(writefile)~="function" then return false,"writefile is not available" end
+        pcall(function()
+            if type(isfolder)=="function" and type(makefolder)=="function" and not isfolder(folder) then makefolder(folder) end
+        end)
+        local ok,encoded=pcall(function() return game:GetService("HttpService"):JSONEncode(self:GetConfig()) end)
+        if not ok then return false,"could not encode config" end
+        local wrote=pcall(writefile,path,encoded)
+        return wrote,wrote and path or "could not write config"
     end
 
     function Window:LoadConfig(name)
-        name=tostring(name or "Default")
-        if not (isfile and readfile) then return false,"Executor file API unavailable" end
-        local path=config.ConfigFolder.."/"..name..".json"
-        if not isfile(path) then return false,"Config not found" end
-        local ok,raw=pcall(readfile,path)
-        if not ok then return false,raw end
-        local data=DecodeConfig(raw)
-        if not data then return false,"Invalid config" end
+        name=tostring(name or "default"):gsub("[^%w_%-]","_")
+        local path=self.ConfigFolder.."/"..name..".json"
+        if type(isfile)~="function" or type(readfile)~="function" or not isfile(path) then return false,"config not found" end
+        local ok,data=pcall(function() return game:GetService("HttpService"):JSONDecode(readfile(path)) end)
+        if not ok then return false,"invalid config" end
         self:ApplyConfig(data)
-        return true,data
+        return true,path
     end
 
-    function Window:SetTheme(name)
-        local theme=THEMES[name]
-        if not theme then return false end
-        ApplyThemeToGui(ScreenGui,theme)
-        Main.BackgroundColor3=theme.Background
-        MainStroke.Color=theme.Border
-        config.BorderColor=theme.Border
-        return true
+    local function SearchCurrentPage(query)
+        query=string.lower(tostring(query or "")):gsub("^%s+",""):gsub("%s+$","")
+        local page=Window.ActiveTab and Window.ActiveTab.Page
+        if not page then return end
+        for _,child in ipairs(page:GetChildren()) do
+            if child:IsA("GuiObject") and not child:IsA("UIListLayout") then
+                if query=="" then
+                    child.Visible=true
+                else
+                    local found=false
+                    for _,desc in ipairs(child:GetDescendants()) do
+                        if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                            local t=string.lower(desc.Text or "")
+                            if t:find(query,1,true) then found=true break end
+                        end
+                    end
+                    child.Visible=found
+                end
+            end
+        end
     end
-
-    function Window:GetThemes()
-        local list={}
-        for name in pairs(THEMES) do table.insert(list,name) end
-        table.sort(list)
-        return list
-    end
+    SearchBox:GetPropertyChangedSignal("Text"):Connect(function() SearchCurrentPage(SearchBox.Text) end)
 
     ----------------------------------------------------------------
     -- PROFILE METHODS
     ----------------------------------------------------------------
     function Window:SetProfile(displayName, username, image)
-        -- Header-only profile. DisplayName/username are optional and are kept
-        -- for API compatibility; the visible element is the avatar.
-        if image ~= nil and ProfileAvatar then
-            ProfileAvatar.Image = tostring(image)
-        end
+        if not ProfileCard then return end
+        if displayName ~= nil then ProfileDisplay.Text = tostring(displayName) end
+        if username ~= nil then ProfileUsername.Text = tostring(username) end
+        if image ~= nil then ProfileAvatar.Image = tostring(image) end
     end
 
     ----------------------------------------------------------------
     -- CREATE TAB
     ----------------------------------------------------------------
     function Window:CreateTab(tabName)
-        -- Compatibility: accept both CreateTab("Player") and CreateTab({Name = "Player"})
-        if type(tabName) == "table" then
-            tabName = tabName.Name or tabName.Title or "Tab"
-        end
-        tabName = tostring(tabName or "Tab")
-
         local TabButton = Create("TextButton", {
             BackgroundColor3 = Color3.fromRGB(38, 38, 43),
             AutoButtonColor = false,
@@ -699,6 +753,7 @@ function ArceusUI:CreateWindow(options)
                 TextColor3 = Color3.new(1, 1, 1)
             }, 0.15)
             Window.ActiveTab = Tab
+            SearchBox.Text = ""
         end
 
         TabButton.MouseButton1Click:Connect(function()
@@ -810,8 +865,9 @@ function ArceusUI:CreateWindow(options)
                 PlayClick(config.Sounds)
                 Toggle:Set(not value)
             end)
+            function Toggle:Get() return value end
             if data.ConfigKey then
-                Window:RegisterConfig(data.ConfigKey, function() return value end, function(v) Toggle:Set(v) end)
+                Window:RegisterConfig(data.ConfigKey,function() return value end,function(v) Toggle:Set(v) end)
             end
             return Toggle
         end
@@ -821,35 +877,10 @@ function ArceusUI:CreateWindow(options)
         ----------------------------------------------------------------
         function Tab:CreateSlider(data)
             data = data or {}
-
-            -- Supports both:
-            --   Min / Max / Default
-            -- and:
-            --   Range = {min, max}
-            local range = data.Range
-            local min = data.Min
-            local max = data.Max
-
-            if type(range) == "table" then
-                min = range[1] or min
-                max = range[2] or max
-            end
-
-            min = tonumber(min) or 0
-            max = tonumber(max) or 100
+            local min = data.Min or 0
+            local max = data.Max or 100
             if max <= min then max = min + 1 end
-
-            local increment = tonumber(data.Increment) or 1
-            if increment <= 0 then increment = 1 end
-
-            local function Normalize(value)
-                value = tonumber(value) or min
-                value = math.clamp(value, min, max)
-                value = min + math.floor(((value - min) / increment) + 0.5) * increment
-                return math.clamp(value, min, max)
-            end
-
-            local current = Normalize(data.CurrentValue ~= nil and data.CurrentValue or data.Default or min)
+            local current = math.clamp(data.Default or min, min, max)
 
             local Holder = Create("Frame", {
                 BackgroundColor3 = Color3.fromRGB(35, 35, 40),
@@ -900,7 +931,7 @@ function ArceusUI:CreateWindow(options)
 
             local draggingSlider = false
             local function SetValue(value)
-                current = Normalize(value)
+                current = math.clamp(value, min, max)
                 local percent = (current - min) / (max - min)
                 ValueLabel.Text = tostring(math.floor(current))
                 Tween(Fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.08)
@@ -936,8 +967,9 @@ function ArceusUI:CreateWindow(options)
 
             local Slider = {}
             function Slider:Set(value) SetValue(value) end
+            function Slider:Get() return current end
             if data.ConfigKey then
-                Window:RegisterConfig(data.ConfigKey, function() return current end, function(v) Slider:Set(v) end)
+                Window:RegisterConfig(data.ConfigKey,function() return current end,function(v) Slider:Set(v) end)
             end
             return Slider
         end
@@ -1023,83 +1055,11 @@ function ArceusUI:CreateWindow(options)
                 options = newOptions or {}
                 Rebuild()
             end
+            function Dropdown:Get() return selected end
             if data.ConfigKey then
-                Window:RegisterConfig(data.ConfigKey, function() return selected end, function(v) Dropdown:Set(v) end)
+                Window:RegisterConfig(data.ConfigKey,function() return selected end,function(v) Dropdown:Set(v) end)
             end
             return Dropdown
-        end
-
-
-        ----------------------------------------------------------------
-        -- MULTI DROPDOWN
-        ----------------------------------------------------------------
-        function Tab:CreateMultiDropdown(data)
-            data=data or {}
-            local options=data.Options or {}
-            local selected={}
-            local holder=Create("Frame",{BackgroundColor3=Color3.fromRGB(35,35,40),Size=UDim2.new(1,0,0,44),ClipsDescendants=true,ZIndex=5},Page)
-            Corner(holder,8)
-            local button=Create("TextButton",{BackgroundTransparency=1,Size=UDim2.new(1,0,0,44),AutoButtonColor=false,Font=Enum.Font.GothamMedium,Text="",TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=6},holder)
-            local list=Create("Frame",{BackgroundTransparency=1,Position=UDim2.fromOffset(8,48),Size=UDim2.new(1,-16,0,0),ZIndex=6},holder)
-            local layout=Create("UIListLayout",{Padding=UDim.new(0,5)},list)
-            local function count() local n=0 for _ in pairs(selected) do n+=1 end return n end
-            local function refreshText() local names={} for _,o in ipairs(options) do if selected[o] then table.insert(names,tostring(o)) end end button.Text=(data.Name or "Multi Dropdown").."   •   "..( #names>0 and table.concat(names,", ") or "None") end
-            local function rebuild()
-                for _,c in ipairs(list:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
-                for _,o in ipairs(options) do
-                    local b=Create("TextButton",{BackgroundColor3=selected[o] and Color3.fromRGB(75,65,100) or Color3.fromRGB(45,45,50),Size=UDim2.new(1,0,0,30),AutoButtonColor=false,Font=Enum.Font.Gotham,Text=tostring(o),TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=7},list)
-                    Corner(b,6)
-                    b.MouseButton1Click:Connect(function()
-                        selected[o]=not selected[o]
-                        b.BackgroundColor3=selected[o] and Color3.fromRGB(75,65,100) or Color3.fromRGB(45,45,50)
-                        refreshText()
-                        if data.Callback then task.spawn(data.Callback,selected) end
-                    end)
-                end
-                refreshText()
-            end
-            rebuild()
-            button.MouseButton1Click:Connect(function()
-                PlayClick(config.Sounds)
-                local open=holder.Size.Y.Offset>44
-                holder.Size=UDim2.new(1,0,0,open and 44 or math.min(44+(#options*35)+8,220))
-            end)
-            local Multi={}
-            function Multi:Set(values)
-                selected={}
-                if type(values)=="table" then for _,v in ipairs(values) do selected[v]=true end end
-                rebuild()
-                if data.Callback then task.spawn(data.Callback,selected) end
-            end
-            function Multi:Get() local out={} for v in pairs(selected) do table.insert(out,v) end return out end
-            function Multi:Refresh(newOptions) options=newOptions or {}; rebuild() end
-            if data.ConfigKey then Window:RegisterConfig(data.ConfigKey,function() return Multi:Get() end,function(v) Multi:Set(v) end) end
-            return Multi
-        end
-
-        ----------------------------------------------------------------
-        -- KEYBIND
-        ----------------------------------------------------------------
-        function Tab:CreateKeybind(data)
-            data=data or {}
-            local key=data.Default or data.Key or Enum.KeyCode.RightShift
-            local holder=Create("Frame",{BackgroundColor3=Color3.fromRGB(35,35,40),Size=UDim2.new(1,0,0,46),ZIndex=5},Page)
-            Corner(holder,8)
-            Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(13,0),Size=UDim2.new(1,-100,1,0),Font=Enum.Font.GothamMedium,Text=data.Name or "Keybind",TextColor3=Color3.new(1,1,1),TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},holder)
-            local button=Create("TextButton",{BackgroundColor3=Color3.fromRGB(45,45,50),Position=UDim2.new(1,-82,.5,-13),Size=UDim2.fromOffset(68,26),AutoButtonColor=false,Font=Enum.Font.GothamMedium,Text=key.Name,TextColor3=Color3.new(1,1,1),TextSize=10,ZIndex=6},holder)
-            Corner(button,7)
-            local listening=false
-            local bind={}
-            local function setKey(k) if typeof(k)=="EnumItem" and k.EnumType==Enum.KeyCode then key=k; button.Text=k.Name end end
-            button.MouseButton1Click:Connect(function() listening=true; button.Text="Press..." end)
-            UserInputService.InputBegan:Connect(function(input,gp)
-                if listening and input.UserInputType==Enum.UserInputType.Keyboard then listening=false; setKey(input.KeyCode); return end
-                if not gp and input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode==key and data.Callback then task.spawn(data.Callback,key) end
-            end)
-            function bind:Set(k) setKey(k) end
-            function bind:Get() return key.Name end
-            if data.ConfigKey then Window:RegisterConfig(data.ConfigKey,function() return key.Name end,function(v) if Enum.KeyCode[v] then bind:Set(Enum.KeyCode[v]) end end) end
-            return bind
         end
 
         ----------------------------------------------------------------
@@ -1146,8 +1106,8 @@ function ArceusUI:CreateWindow(options)
                 Visible = false,
                 ZIndex = 80
             }, ScreenGui)
-            Corner(Modal, 14)
-            local ModalStroke = Stroke(Modal, config.BorderColor, config.BorderThickness)
+            Corner(Modal, 10)
+            local ModalStroke = Stroke(Modal, Color3.fromRGB(100, 100, 100), 1.5)
             StartRGB(ModalStroke, config.RGB)
 
             Create("TextLabel", {
@@ -1168,16 +1128,11 @@ function ArceusUI:CreateWindow(options)
 
             local PreviewBox = Create("Frame", {
                 BackgroundColor3 = currentColor,
-                Position = UDim2.fromOffset(15, 148),
-                Size = UDim2.new(1, -30, 0, 34),
+                Position = UDim2.fromOffset(15, 160),
+                Size = UDim2.new(1, -30, 0, 30),
                 ZIndex = 81
             }, Modal)
             Corner(PreviewBox, 7)
-
-            local function UpdatePreview()
-                local color = Color3.fromRGB(R, G, B)
-                PreviewBox.BackgroundColor3 = color
-            end
 
             local function MakeRGBSlider(name, y, initial, callback)
                 Create("TextLabel", {
@@ -1191,18 +1146,6 @@ function ArceusUI:CreateWindow(options)
                     ZIndex = 82
                 }, Modal)
 
-                local valueLabel = Create("TextLabel", {
-                    BackgroundTransparency = 1,
-                    Position = UDim2.new(1, -42, 0, y),
-                    Size = UDim2.fromOffset(27, 20),
-                    Font = Enum.Font.GothamMedium,
-                    Text = tostring(initial),
-                    TextColor3 = Color3.fromRGB(180, 180, 185),
-                    TextSize = 10,
-                    TextXAlignment = Enum.TextXAlignment.Right,
-                    ZIndex = 82
-                }, Modal)
-
                 local bar = Create("Frame", {
                     BackgroundColor3 = Color3.fromRGB(55, 55, 60),
                     Position = UDim2.fromOffset(45, y + 6),
@@ -1212,10 +1155,7 @@ function ArceusUI:CreateWindow(options)
                 Corner(bar, 5)
 
                 local fill = Create("Frame", {
-                    BackgroundColor3 =
-                        name == "R" and Color3.fromRGB(220, 70, 70)
-                        or name == "G" and Color3.fromRGB(70, 210, 100)
-                        or Color3.fromRGB(75, 145, 255),
+                    BackgroundColor3 = Color3.fromRGB(120, 120, 125),
                     Size = UDim2.new(initial / 255, 0, 1, 0),
                     ZIndex = 83
                 }, bar)
@@ -1227,11 +1167,10 @@ function ArceusUI:CreateWindow(options)
                         (input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X,
                         0, 1
                     )
-                    local value = math.floor(percent * 255 + 0.5)
+                    local value = math.floor(percent * 255)
                     Tween(fill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.05)
-                    valueLabel.Text = tostring(value)
                     callback(value)
-                    UpdatePreview()
+                    PreviewBox.BackgroundColor3 = Color3.fromRGB(R, G, B)
                 end
                 bar.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -1261,7 +1200,7 @@ function ArceusUI:CreateWindow(options)
             local Cancel = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(48, 48, 53),
                 Position = UDim2.new(0, 15, 1, -47),
-                Size = UDim2.fromOffset(120, 34),
+                Size = UDim2.fromOffset(105, 32),
                 AutoButtonColor = false,
                 Font = Enum.Font.GothamMedium,
                 Text = "Cancelar",
@@ -1273,8 +1212,8 @@ function ArceusUI:CreateWindow(options)
 
             local Accept = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(65, 65, 72),
-                Position = UDim2.new(1, -135, 1, -49),
-                Size = UDim2.fromOffset(120, 34),
+                Position = UDim2.new(1, -120, 1, -47),
+                Size = UDim2.fromOffset(105, 32),
                 AutoButtonColor = false,
                 Font = Enum.Font.GothamMedium,
                 Text = "Aceptar",
@@ -1294,7 +1233,7 @@ function ArceusUI:CreateWindow(options)
                 PlayClick(config.Sounds)
                 Modal.Visible = true
                 Modal.Size = UDim2.fromOffset(0, 0)
-                Tween(Modal, {Size = UDim2.fromOffset(330, 235)}, 0.28, Enum.EasingStyle.Back)
+                Tween(Modal, {Size = UDim2.fromOffset(310, 225)}, 0.28, Enum.EasingStyle.Back)
             end)
             Cancel.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
@@ -1317,9 +1256,7 @@ function ArceusUI:CreateWindow(options)
             end
             function ColorPicker:Get() return currentColor end
             if data.ConfigKey then
-                Window:RegisterConfig(data.ConfigKey, function() return {R=currentColor.R,G=currentColor.G,B=currentColor.B} end, function(v)
-                    if type(v)=="table" and v.R and v.G and v.B then ColorPicker:Set(Color3.new(v.R,v.G,v.B)) end
-                end)
+                Window:RegisterConfig(data.ConfigKey,function() return currentColor end,function(v) ColorPicker:Set(v) end)
             end
             return ColorPicker
         end
@@ -1341,122 +1278,6 @@ function ArceusUI:CreateWindow(options)
             }, Page)
         end
 
-        ----------------------------------------------------------------
-        -- PARAGRAPH
-        ----------------------------------------------------------------
-        function Tab:CreateParagraph(data)
-            data = data or {}
-
-            local Holder = Create("Frame", {
-                BackgroundColor3 = Color3.fromRGB(35, 35, 40),
-                Size = UDim2.new(1, 0, 0, 72),
-                ZIndex = 5
-            }, Page)
-            Corner(Holder, 8)
-
-            local Title = Create("TextLabel", {
-                BackgroundTransparency = 1,
-                Position = UDim2.fromOffset(13, 8),
-                Size = UDim2.new(1, -26, 0, 20),
-                Font = Enum.Font.GothamBold,
-                Text = tostring(data.Title or "Paragraph"),
-                TextColor3 = Color3.new(1, 1, 1),
-                TextSize = 12,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 6
-            }, Holder)
-
-            local Content = Create("TextLabel", {
-                BackgroundTransparency = 1,
-                Position = UDim2.fromOffset(13, 29),
-                Size = UDim2.new(1, -26, 0, 35),
-                Font = Enum.Font.Gotham,
-                Text = tostring(data.Content or ""),
-                TextColor3 = Color3.fromRGB(175, 175, 180),
-                TextSize = 11,
-                TextWrapped = true,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                TextYAlignment = Enum.TextYAlignment.Top,
-                ZIndex = 6
-            }, Holder)
-
-            local Paragraph = {}
-
-            function Paragraph:Set(title, content)
-                Title.Text = tostring(title or "")
-                Content.Text = tostring(content or "")
-            end
-
-            return Paragraph
-        end
-
-        ----------------------------------------------------------------
-        -- TEXTBOX / INPUT
-        ----------------------------------------------------------------
-        function Tab:CreateInput(data)
-            data = data or {}
-
-            local Holder = Create("Frame", {
-                BackgroundColor3 = Color3.fromRGB(35, 35, 40),
-                Size = UDim2.new(1, 0, 0, 70),
-                ZIndex = 5
-            }, Page)
-            Corner(Holder, 8)
-
-            Create("TextLabel", {
-                BackgroundTransparency = 1,
-                Position = UDim2.fromOffset(13, 7),
-                Size = UDim2.new(1, -26, 0, 18),
-                Font = Enum.Font.GothamMedium,
-                Text = tostring(data.Name or "Textbox"),
-                TextColor3 = Color3.new(1, 1, 1),
-                TextSize = 12,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 6
-            }, Holder)
-
-            local Box = Create("TextBox", {
-                BackgroundColor3 = Color3.fromRGB(25, 25, 30),
-                Position = UDim2.fromOffset(10, 30),
-                Size = UDim2.new(1, -20, 0, 30),
-                ClearTextOnFocus = data.ClearTextOnFocus == true,
-                Font = Enum.Font.Gotham,
-                PlaceholderText = tostring(data.PlaceholderText or ""),
-                Text = tostring(data.CurrentValue or ""),
-                TextColor3 = Color3.new(1, 1, 1),
-                PlaceholderColor3 = Color3.fromRGB(125, 125, 130),
-                TextSize = 11,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 6
-            }, Holder)
-            Corner(Box, 7)
-            Stroke(Box, Color3.fromRGB(55, 55, 60), 1)
-
-            Box.FocusLost:Connect(function()
-                if data.Callback then
-                    task.spawn(data.Callback, Box.Text)
-                end
-            end)
-
-            local Input = {}
-
-            function Input:Set(value)
-                Box.Text = tostring(value or "")
-                if data.Callback then
-                    task.spawn(data.Callback, Box.Text)
-                end
-            end
-
-            function Input:Get()
-                return Box.Text
-            end
-            if data.ConfigKey then
-                Window:RegisterConfig(data.ConfigKey, function() return Box.Text end, function(v) Input:Set(v) end)
-            end
-
-            return Input
-        end
-
         function Tab:CreateSeparator()
             return Create("Frame", {
                 BackgroundColor3 = Color3.fromRGB(55, 55, 60),
@@ -1472,63 +1293,6 @@ function ArceusUI:CreateWindow(options)
     ----------------------------------------------------------------
     -- WINDOW METHODS
     ----------------------------------------------------------------
-
-    ----------------------------------------------------------------
-    -- KEY SYSTEM
-    ----------------------------------------------------------------
-    function Window:CreateKeySystem(data)
-        data=data or {}
-        local expected=tostring(data.Key or "")
-        local note=tostring(data.Note or "Enter the key to continue.")
-        local gate=Create("Frame",{Name="KeySystem",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(330,220),BackgroundColor3=Color3.fromRGB(25,25,28),BorderSizePixel=0,ZIndex=200},ScreenGui)
-        Corner(gate,16); Stroke(gate,config.BorderColor,config.BorderThickness); StartRGB(gate:FindFirstChildOfClass("UIStroke"),config.RGB)
-        Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(20,18),Size=UDim2.new(1,-40,0,25),Font=Enum.Font.GothamBold,Text=tostring(data.Title or "Key System"),TextColor3=Color3.new(1,1,1),TextSize=16,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
-        Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(20,50),Size=UDim2.new(1,-40,0,45),Font=Enum.Font.Gotham,Text=note,TextColor3=Color3.fromRGB(165,165,170),TextSize=11,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
-        local box=Create("TextBox",{BackgroundColor3=Color3.fromRGB(35,35,40),Position=UDim2.fromOffset(20,105),Size=UDim2.new(1,-40,0,38),ClearTextOnFocus=false,Font=Enum.Font.Gotham,PlaceholderText="Enter key...",Text="",TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=201},gate); Corner(box,8)
-        local status=Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(20,145),Size=UDim2.new(1,-40,0,18),Font=Enum.Font.Gotham,Text="",TextColor3=Color3.fromRGB(235,90,90),TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
-        local enter=Create("TextButton",{BackgroundColor3=Color3.fromRGB(75,75,82),Position=UDim2.new(1,-120,1,-48),Size=UDim2.fromOffset(100,34),AutoButtonColor=false,Font=Enum.Font.GothamMedium,Text="Continue",TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=201},gate); Corner(enter,8)
-        local function verify()
-            if box.Text==expected then gate:Destroy(); Main.Visible=true; Window.KeyUnlocked=true else status.Text="Invalid key." end
-        end
-        enter.MouseButton1Click:Connect(verify)
-        box.FocusLost:Connect(function(enterPressed) if enterPressed then verify() end end)
-        Main.Visible=false
-        return gate
-    end
-
-    ----------------------------------------------------------------
-    -- WATERMARK / FPS / PING
-    ----------------------------------------------------------------
-    function Window:CreateWatermark(data)
-        data=data or {}
-        local holder=Create("Frame",{Name="Watermark",AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-12,0,12),Size=UDim2.fromOffset(220,30),BackgroundColor3=Color3.fromRGB(18,18,21),BackgroundTransparency=.08,ZIndex=150},ScreenGui)
-        Corner(holder,9); Stroke(holder,config.BorderColor,1)
-        local label=Create("TextLabel",{BackgroundTransparency=1,Size=UDim2.new(1,-16,1,0),Position=UDim2.fromOffset(8,0),Font=Enum.Font.GothamMedium,TextColor3=Color3.new(1,1,1),TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=151},holder)
-        local RunService=game:GetService("RunService")
-        local showFPS=data.ShowFPS~=false; local showPing=data.ShowPing~=false; local last=os.clock(); local frames=0; local fps=0
-        local conn=RunService.RenderStepped:Connect(function()
-            frames+=1
-            local now=os.clock()
-            if now-last>=1 then fps=frames/(now-last); frames=0; last=now end
-            local parts={}
-            if data.Prefix then table.insert(parts,tostring(data.Prefix)) end
-            if showFPS then table.insert(parts,"FPS: "..math.floor(fps)) end
-            if showPing then
-                local ping=0
-                pcall(function() ping=math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"] and game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue() or 0) end)
-                table.insert(parts,"Ping: "..ping.."ms")
-            end
-            label.Text=table.concat(parts,"  •  ")
-        end)
-        function holder.DestroyWatermark() conn:Disconnect(); holder:Destroy() end
-        return holder
-    end
-
-    function Window:SetKeybind(keyCode, callback)
-        self._GlobalKeybind=keyCode
-        UserInputService.InputBegan:Connect(function(input,gp) if not gp and input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode==keyCode and callback then task.spawn(callback) end end)
-    end
-
     function Window:Notify(data)
         ArceusUI:Notify(data)
     end
@@ -1545,9 +1309,47 @@ function ArceusUI:CreateWindow(options)
         Subtitle.Text = tostring(text)
     end
 
-    if config.KeySystem and type(config.KeySystem)=="table" and config.KeySystem.Enabled then Window:CreateKeySystem(config.KeySystem) end
-    if config.Watermark and type(config.Watermark)=="table" and config.Watermark.Enabled then Window:CreateWatermark(config.Watermark) end
-    if config.Theme and THEMES[config.Theme] then Window:SetTheme(config.Theme) end
+    ----------------------------------------------------------------
+    -- KEY SYSTEM
+    -- The full Window/Tab tree is created first; this is only an overlay.
+    ----------------------------------------------------------------
+    function Window:CreateKeySystem(data)
+        data=data or {}
+        local expected=tostring(data.Key or data.KeyValue or "")
+        local gate=Create("Frame",{
+            Name="KeySystem",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),
+            Size=UDim2.fromOffset(0,0),BackgroundColor3=Color3.fromRGB(25,25,28),
+            BorderSizePixel=0,ZIndex=200,Visible=false
+        },ScreenGui)
+        Corner(gate,12)
+        local gs=Stroke(gate,Color3.fromRGB(100,100,100),2); StartRGB(gs,config.RGB)
+        Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(18,16),Size=UDim2.new(1,-36,0,24),Font=Enum.Font.GothamBold,Text=tostring(data.Title or "Arceus X Key System"),TextColor3=Color3.new(1,1,1),TextSize=16,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
+        Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(18,45),Size=UDim2.new(1,-36,0,42),Font=Enum.Font.Gotham,Text=tostring(data.Note or "Enter the key to continue."),TextColor3=Color3.fromRGB(155,155,160),TextSize=11,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
+        local input=Create("TextBox",{BackgroundColor3=Color3.fromRGB(40,40,45),Position=UDim2.fromOffset(18,96),Size=UDim2.new(1,-36,0,38),ClearTextOnFocus=false,PlaceholderText="Enter key...",PlaceholderColor3=Color3.fromRGB(120,120,125),Text="",TextColor3=Color3.new(1,1,1),Font=Enum.Font.Gotham,TextSize=12,ZIndex=201},gate); Corner(input,8)
+        local status=Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(18,138),Size=UDim2.new(1,-36,0,20),Font=Enum.Font.Gotham,Text="",TextColor3=Color3.fromRGB(220,90,90),TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
+        local unlock=Create("TextButton",{BackgroundColor3=Color3.fromRGB(65,65,72),Position=UDim2.new(1,-123,1,-48),Size=UDim2.fromOffset(105,32),AutoButtonColor=false,Font=Enum.Font.GothamMedium,Text="Unlock",TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=201},gate); Corner(unlock,7)
+        local verified=false
+        local function verify()
+            if verified then return end
+            if expected=="" or input.Text==expected then
+                verified=true; gate.Visible=false; BorderFrame.Visible=true; Main.Visible=true; status.Text=""; PlayClick(config.Sounds)
+            else status.Text="Invalid key" end
+        end
+        unlock.MouseButton1Click:Connect(verify)
+        input.FocusLost:Connect(function(enter) if enter then verify() end end)
+        local function show()
+            if verified or closed then return end
+            Main.Visible=false; BorderFrame.Visible=false; gate.Visible=true; gate.Size=UDim2.fromOffset(0,0)
+            Tween(gate,{Size=UDim2.fromOffset(350,205)},.3,Enum.EasingStyle.Back)
+        end
+        Window.KeySystem={Frame=gate,Input=input,Show=show,Verify=verify}
+        show()
+        return Window.KeySystem
+    end
+
+    if config.KeySystem and type(config.KeySystem)=="table" and config.KeySystem.Enabled then
+        Window:CreateKeySystem(config.KeySystem)
+    end
 
     Library.Windows[#Library.Windows + 1] = Window
     return Window
