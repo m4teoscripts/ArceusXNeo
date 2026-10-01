@@ -1013,8 +1013,14 @@ function ArceusUI:CreateWindow(options)
                 ZIndex = 80,
                 ClipsDescendants = true
             }, Main)
-            Corner(Modal, 10)
+            -- ColorPicker: borde completamente redondeado.
+            -- El fondo, clip y UIStroke viven en el MISMO Frame para que
+            -- ninguna esquina sobresalga.
+            Corner(Modal, 18)
+            Modal.ClipsDescendants = true
             local ModalStroke = Stroke(Modal, Color3.fromRGB(100, 100, 100), 1.5)
+            -- Round join cuando el cliente lo soporta.
+            pcall(function() ModalStroke.LineJoinMode = Enum.LineJoinMode.Round end)
             StartRGB(ModalStroke, config.RGB)
 
             Create("TextLabel", {
@@ -1039,7 +1045,7 @@ function ArceusUI:CreateWindow(options)
                 Size = UDim2.new(1, -30, 0, 30),
                 ZIndex = 81
             }, Modal)
-            Corner(PreviewBox, 7)
+            Corner(PreviewBox, 10)
 
             local function MakeRGBSlider(name, y, initial, callback)
                 Create("TextLabel", {
@@ -1115,7 +1121,7 @@ function ArceusUI:CreateWindow(options)
                 TextSize = 11,
                 ZIndex = 82
             }, Modal)
-            Corner(Cancel, 7)
+            Corner(Cancel, 10)
 
             local Accept = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(65, 65, 72),
@@ -1128,7 +1134,7 @@ function ArceusUI:CreateWindow(options)
                 TextSize = 11,
                 ZIndex = 82
             }, Modal)
-            Corner(Accept, 7)
+            Corner(Accept, 10)
 
             local function PositionModal()
                 if not Holder.Parent or not Main.Parent then return end
