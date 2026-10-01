@@ -30,7 +30,7 @@ local DEFAULTS = {
     Size = UDim2.fromOffset(520, 360),
     Position = UDim2.fromScale(0.5, 0.5),
     RGB = true,
-    Sounds = true,
+    Sounds = true, -- true = sonido por defecto, false = sin sonido, string = SoundId
     AnimationSpeed = 0.22,
     ShowProfile = true,
     ProfileName = nil,
@@ -89,15 +89,29 @@ local function Padding(parent, left, right, top, bottom)
     }, parent)
 end
 
-local function PlayClick(enabled)
-    if not enabled then return end
+local function PlayClick(soundSetting)
+    if soundSetting == false or soundSetting == nil then return end
+
+    local soundId = "rbxassetid://6026984224"
+    if type(soundSetting) == "string" then
+        soundId = soundSetting
+        if not string.find(soundId, "rbxassetid://", 1, true) then
+            soundId = "rbxassetid://" .. soundId
+        end
+    elseif type(soundSetting) == "table" then
+        soundId = tostring(soundSetting.SoundId or soundSetting.Id or soundId)
+        if not string.find(soundId, "rbxassetid://", 1, true) then
+            soundId = "rbxassetid://" .. soundId
+        end
+    end
+
     local sound = Create("Sound", {
-        SoundId = "rbxassetid://6026984224",
+        SoundId = soundId,
         Volume = 0.28,
         PlaybackSpeed = 1
     }, SoundService)
     sound:Play()
-    task.delay(2, function()
+    task.delay(3, function()
         if sound then sound:Destroy() end
     end)
 end
@@ -222,13 +236,10 @@ function ArceusUI:CreateWindow(options)
     if not ScreenGui.Parent then ScreenGui.Parent = PlayerGui end
     self.ScreenGui = ScreenGui
 
-    local borderSize = UDim2.new(
-        config.Size.X.Scale, config.Size.X.Offset + 4,
-        config.Size.Y.Scale, config.Size.Y.Offset + 4
-    )
+    -- Un único contenedor exterior con el mismo tamaño y radio que la GUI.
+    -- Esto evita las "orillas salientes" del borde anterior.
+    local borderSize = config.Size
 
-    -- Dedicated border container. Main no longer owns the RGB stroke,
-    -- so ClipsDescendants cannot cut the rounded exterior border.
     local BorderFrame = Create("Frame", {
         Name = "ExteriorBorder",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -237,10 +248,10 @@ function ArceusUI:CreateWindow(options)
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ClipsDescendants = false,
-        ZIndex = 1
+        ZIndex = 4
     }, ScreenGui)
-    Corner(BorderFrame, 14)
-    local BorderStroke = Stroke(BorderFrame, Color3.fromRGB(100, 100, 100), 2)
+    Corner(BorderFrame, 16)
+    local BorderStroke = Stroke(BorderFrame, Color3.fromRGB(100, 100, 100), 1.5)
     StartRGB(BorderStroke, config.RGB)
 
     local Main = Create("Frame", {
@@ -253,7 +264,7 @@ function ArceusUI:CreateWindow(options)
         ClipsDescendants = true,
         ZIndex = 2
     }, ScreenGui)
-    Corner(Main, 12)
+    Corner(Main, 16)
 
     ----------------------------------------------------------------
     -- TOP BAR
@@ -315,50 +326,6 @@ function ArceusUI:CreateWindow(options)
         ZIndex = 5
     }, TopBar)
     Corner(Close, 7)
-
-    ----------------------------------------------------------------
-    -- SEARCH
-    ----------------------------------------------------------------
-    local SearchBox = Create("TextBox", {
-        Name = "SearchBox",
-        BackgroundColor3 = Color3.fromRGB(40, 40, 45),
-        Position = UDim2.new(1, -106, 0, 12),
-        Size = UDim2.fromOffset(28, 28),
-        ClearTextOnFocus = false,
-        PlaceholderText = "⌕",
-        PlaceholderColor3 = Color3.fromRGB(125, 125, 130),
-        Text = "",
-        TextColor3 = Color3.fromRGB(235, 235, 238),
-        Font = Enum.Font.Gotham,
-        TextSize = 10,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        ZIndex = 5
-    }, TopBar)
-    Corner(SearchBox, 8)
-    Stroke(SearchBox, Color3.fromRGB(65, 65, 72), 1)
-    local SearchIcon = Create("ImageButton", {
-        BackgroundTransparency = 1, Position = UDim2.new(1, -99, 0, 18),
-        Size = UDim2.fromOffset(16, 16), AutoButtonColor = false,
-        Image = "rbxassetid://6031154871", ImageColor3 = Color3.fromRGB(160,160,165), ZIndex = 6
-    }, TopBar)
-    SearchIcon.MouseButton1Click:Connect(function() SearchBox:CaptureFocus() end)
-    local searchExpanded = false
-    SearchBox.Focused:Connect(function()
-        searchExpanded = true
-        SearchIcon.Visible = false
-        Tween(SearchBox, {Position = UDim2.new(1, -154, 0, 12), Size = UDim2.fromOffset(72, 28)}, 0.18)
-        SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-        SearchBox.PlaceholderText = "Search"
-    end)
-    SearchBox.FocusLost:Connect(function()
-        if SearchBox.Text == "" then
-            searchExpanded = false
-            SearchBox.TextXAlignment = Enum.TextXAlignment.Center
-            SearchBox.PlaceholderText = ""
-            SearchIcon.Visible = true
-            Tween(SearchBox, {Position = UDim2.new(1, -106, 0, 12), Size = UDim2.fromOffset(28, 28)}, 0.18)
-        end
-    end)
 
     ----------------------------------------------------------------
     -- TAB BAR
@@ -605,32 +572,6 @@ function ArceusUI:CreateWindow(options)
         return true,path
     end
 
-    local function SearchCurrentPage(query)
-        query=string.lower(tostring(query or "")):gsub("^%s+",""):gsub("%s+$","")
-        local page=Window.ActiveTab and Window.ActiveTab.Page
-        if not page then return end
-        for _,child in ipairs(page:GetChildren()) do
-            if child:IsA("GuiObject") and not child:IsA("UIListLayout") then
-                if query=="" then
-                    child.Visible=true
-                else
-                    local found=false
-                    for _,desc in ipairs(child:GetDescendants()) do
-                        if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
-                            local t=string.lower(desc.Text or "")
-                            if t:find(query,1,true) then found=true break end
-                        end
-                    end
-                    child.Visible=found
-                end
-            end
-        end
-    end
-    SearchBox:GetPropertyChangedSignal("Text"):Connect(function() SearchCurrentPage(SearchBox.Text) end)
-
-    ----------------------------------------------------------------
-    -- PROFILE METHODS
-    ----------------------------------------------------------------
     function Window:SetProfile(displayName, username, image)
         if not ProfileCard then return end
         if displayName ~= nil then ProfileDisplay.Text = tostring(displayName) end
@@ -693,7 +634,6 @@ function ArceusUI:CreateWindow(options)
                 TextColor3 = Color3.new(1, 1, 1)
             }, 0.15)
             Window.ActiveTab = Tab
-            SearchBox.Text = ""
         end
 
         TabButton.MouseButton1Click:Connect(function()
