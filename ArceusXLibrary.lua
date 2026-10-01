@@ -1004,22 +1004,23 @@ function ArceusUI:CreateWindow(options)
             }, Holder)
             Corner(Preview, 7)
 
+            -- COLORPICKER MODAL: el borde y el fondo comparten EXACTAMENTE
+            -- el mismo Frame + UICorner. No se usa ningun Frame de borde
+            -- separado, evitando esquinas salientes/cuadradas.
             local Modal = Create("Frame", {
                 BackgroundColor3 = Color3.fromRGB(27, 27, 31),
+                BackgroundTransparency = 0,
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.fromScale(0.5, 0.5),
                 Size = UDim2.fromOffset(0, 0),
                 Visible = false,
+                BorderSizePixel = 0,
                 ZIndex = 80,
                 ClipsDescendants = true
             }, Main)
-            -- ColorPicker: borde completamente redondeado.
-            -- El fondo, clip y UIStroke viven en el MISMO Frame para que
-            -- ninguna esquina sobresalga.
-            Corner(Modal, 18)
+            local ModalCorner = Corner(Modal, 22)
             Modal.ClipsDescendants = true
-            local ModalStroke = Stroke(Modal, Color3.fromRGB(100, 100, 100), 1.5)
-            -- Round join cuando el cliente lo soporta.
+            local ModalStroke = Stroke(Modal, Color3.fromRGB(100, 100, 100), 2)
             pcall(function() ModalStroke.LineJoinMode = Enum.LineJoinMode.Round end)
             StartRGB(ModalStroke, config.RGB)
 
@@ -1045,7 +1046,7 @@ function ArceusUI:CreateWindow(options)
                 Size = UDim2.new(1, -30, 0, 30),
                 ZIndex = 81
             }, Modal)
-            Corner(PreviewBox, 10)
+            Corner(PreviewBox, 12)
 
             local function MakeRGBSlider(name, y, initial, callback)
                 Create("TextLabel", {
@@ -1121,7 +1122,7 @@ function ArceusUI:CreateWindow(options)
                 TextSize = 11,
                 ZIndex = 82
             }, Modal)
-            Corner(Cancel, 10)
+            Corner(Cancel, 12)
 
             local Accept = Create("TextButton", {
                 BackgroundColor3 = Color3.fromRGB(65, 65, 72),
@@ -1134,7 +1135,7 @@ function ArceusUI:CreateWindow(options)
                 TextSize = 11,
                 ZIndex = 82
             }, Modal)
-            Corner(Accept, 10)
+            Corner(Accept, 12)
 
             local function PositionModal()
                 if not Holder.Parent or not Main.Parent then return end
