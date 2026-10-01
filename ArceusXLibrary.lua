@@ -39,6 +39,10 @@ local DEFAULTS = {
     ProfileName = nil,
     ProfileUsername = nil,
     ProfileImage = nil,
+    KeySystem = false,
+    Theme = "Midnight",
+    ConfigFolder = "ArceusX",
+    Watermark = false,
 }
 
 local Library = { Windows = {} }
@@ -222,6 +226,61 @@ function ArceusUI:Notify(data)
             if notification then notification:Destroy() end
         end
     end)
+end
+
+
+----------------------------------------------------------------
+-- EXTENDED FEATURES
+----------------------------------------------------------------
+local THEMES = {
+    Midnight = {Background=Color3.fromRGB(25,25,28), Surface=Color3.fromRGB(35,35,40), Button=Color3.fromRGB(45,45,50), Text=Color3.fromRGB(245,245,245), SubText=Color3.fromRGB(155,155,160), Border=Color3.fromRGB(70,70,75), Accent=Color3.fromRGB(125,80,255)},
+    Ocean = {Background=Color3.fromRGB(18,25,32), Surface=Color3.fromRGB(25,36,46), Button=Color3.fromRGB(33,48,60), Text=Color3.fromRGB(240,248,255), SubText=Color3.fromRGB(145,175,195), Border=Color3.fromRGB(60,120,150), Accent=Color3.fromRGB(45,170,255)},
+    Purple = {Background=Color3.fromRGB(27,20,35), Surface=Color3.fromRGB(40,30,50), Button=Color3.fromRGB(55,40,68), Text=Color3.fromRGB(248,242,255), SubText=Color3.fromRGB(175,155,190), Border=Color3.fromRGB(115,75,150), Accent=Color3.fromRGB(160,90,255)},
+    Crimson = {Background=Color3.fromRGB(32,19,22), Surface=Color3.fromRGB(47,28,32), Button=Color3.fromRGB(64,36,42), Text=Color3.fromRGB(255,242,244), SubText=Color3.fromRGB(190,150,155), Border=Color3.fromRGB(130,55,65), Accent=Color3.fromRGB(235,65,85)},
+    Emerald = {Background=Color3.fromRGB(18,30,25), Surface=Color3.fromRGB(27,44,36), Button=Color3.fromRGB(37,58,47), Text=Color3.fromRGB(240,255,248), SubText=Color3.fromRGB(145,180,160), Border=Color3.fromRGB(55,125,90), Accent=Color3.fromRGB(60,210,135)},
+    Rose = {Background=Color3.fromRGB(32,21,28), Surface=Color3.fromRGB(48,31,42), Button=Color3.fromRGB(65,40,55), Text=Color3.fromRGB(255,245,250), SubText=Color3.fromRGB(195,160,180), Border=Color3.fromRGB(135,75,105), Accent=Color3.fromRGB(255,95,170)},
+    Sunset = {Background=Color3.fromRGB(34,24,18), Surface=Color3.fromRGB(50,35,25), Button=Color3.fromRGB(70,47,30), Text=Color3.fromRGB(255,248,238), SubText=Color3.fromRGB(195,165,135), Border=Color3.fromRGB(145,85,45), Accent=Color3.fromRGB(255,145,55)},
+    Amoled = {Background=Color3.fromRGB(0,0,0), Surface=Color3.fromRGB(12,12,12), Button=Color3.fromRGB(22,22,22), Text=Color3.fromRGB(250,250,250), SubText=Color3.fromRGB(145,145,145), Border=Color3.fromRGB(55,55,55), Accent=Color3.fromRGB(255,255,255)},
+    Cyber = {Background=Color3.fromRGB(10,17,20), Surface=Color3.fromRGB(15,28,31), Button=Color3.fromRGB(20,42,45), Text=Color3.fromRGB(235,255,255), SubText=Color3.fromRGB(120,180,180), Border=Color3.fromRGB(35,130,135), Accent=Color3.fromRGB(0,255,210)},
+    Monochrome = {Background=Color3.fromRGB(30,30,30), Surface=Color3.fromRGB(45,45,45), Button=Color3.fromRGB(60,60,60), Text=Color3.fromRGB(245,245,245), SubText=Color3.fromRGB(175,175,175), Border=Color3.fromRGB(110,110,110), Accent=Color3.fromRGB(220,220,220)},
+}
+
+local function SameColor(a,b)
+    return a and b and math.abs(a.R-b.R)<0.002 and math.abs(a.G-b.G)<0.002 and math.abs(a.B-b.B)<0.002
+end
+
+local function ApplyThemeToGui(root, theme)
+    local oldSurface = Color3.fromRGB(35,35,40)
+    local oldButton = Color3.fromRGB(45,45,50)
+    local oldBackground = Color3.fromRGB(25,25,28)
+    local oldSub = Color3.fromRGB(150,150,155)
+    local oldText = Color3.new(1,1,1)
+    for _,obj in ipairs(root:GetDescendants()) do
+        if obj:IsA("UIStroke") then
+            if SameColor(obj.Color, Color3.fromRGB(70,70,75)) or SameColor(obj.Color, Color3.fromRGB(55,55,60)) then obj.Color=theme.Border end
+        elseif obj:IsA("TextButton") then
+            if SameColor(obj.BackgroundColor3, oldButton) or SameColor(obj.BackgroundColor3, oldSurface) then obj.BackgroundColor3=theme.Button end
+            if SameColor(obj.TextColor3, oldText) or SameColor(obj.TextColor3, Color3.fromRGB(220,220,220)) then obj.TextColor3=theme.Text end
+        elseif obj:IsA("TextLabel") then
+            if SameColor(obj.TextColor3, oldText) then obj.TextColor3=theme.Text
+            elseif SameColor(obj.TextColor3, oldSub) or SameColor(obj.TextColor3, Color3.fromRGB(175,175,180)) then obj.TextColor3=theme.SubText end
+        elseif obj:IsA("Frame") then
+            if SameColor(obj.BackgroundColor3, oldBackground) then obj.BackgroundColor3=theme.Background
+            elseif SameColor(obj.BackgroundColor3, oldSurface) then obj.BackgroundColor3=theme.Surface
+            elseif SameColor(obj.BackgroundColor3, oldButton) then obj.BackgroundColor3=theme.Button end
+        end
+    end
+end
+
+local function EncodeConfig(data)
+    local HttpService=game:GetService("HttpService")
+    return HttpService:JSONEncode(data or {})
+end
+
+local function DecodeConfig(raw)
+    local HttpService=game:GetService("HttpService")
+    local ok,result=pcall(function() return HttpService:JSONDecode(raw) end)
+    return ok and result or nil
 end
 
 function ArceusUI:CreateWindow(options)
@@ -502,6 +561,72 @@ function ArceusUI:CreateWindow(options)
     Window.ActiveTab = nil
     Window.Profile = ProfileCard
 
+    Window._ConfigItems = {}
+    function Window:RegisterConfig(key, getter, setter)
+        if type(key) ~= "string" or key == "" then return end
+        self._ConfigItems[key] = {Get=getter, Set=setter}
+    end
+
+    function Window:GetConfig()
+        local data={}
+        for key,item in pairs(self._ConfigItems) do
+            if item.Get then
+                local ok,value=pcall(item.Get)
+                if ok then data[key]=value end
+            end
+        end
+        return data
+    end
+
+    function Window:ApplyConfig(data)
+        if type(data) ~= "table" then return false end
+        for key,value in pairs(data) do
+            local item=self._ConfigItems[key]
+            if item and item.Set then pcall(item.Set,value) end
+        end
+        return true
+    end
+
+    function Window:SaveConfig(name)
+        name=tostring(name or "Default")
+        local data=self:GetConfig()
+        if not (writefile and readfile) then return false,"Executor file API unavailable" end
+        pcall(function() if makefolder and not isfolder(config.ConfigFolder) then makefolder(config.ConfigFolder) end end)
+        local path=config.ConfigFolder.."/"..name..".json"
+        local ok,err=pcall(function() writefile(path,EncodeConfig(data)) end)
+        return ok,err
+    end
+
+    function Window:LoadConfig(name)
+        name=tostring(name or "Default")
+        if not (isfile and readfile) then return false,"Executor file API unavailable" end
+        local path=config.ConfigFolder.."/"..name..".json"
+        if not isfile(path) then return false,"Config not found" end
+        local ok,raw=pcall(readfile,path)
+        if not ok then return false,raw end
+        local data=DecodeConfig(raw)
+        if not data then return false,"Invalid config" end
+        self:ApplyConfig(data)
+        return true,data
+    end
+
+    function Window:SetTheme(name)
+        local theme=THEMES[name]
+        if not theme then return false end
+        ApplyThemeToGui(ScreenGui,theme)
+        Main.BackgroundColor3=theme.Background
+        MainStroke.Color=theme.Border
+        config.BorderColor=theme.Border
+        return true
+    end
+
+    function Window:GetThemes()
+        local list={}
+        for name in pairs(THEMES) do table.insert(list,name) end
+        table.sort(list)
+        return list
+    end
+
     ----------------------------------------------------------------
     -- PROFILE METHODS
     ----------------------------------------------------------------
@@ -685,6 +810,9 @@ function ArceusUI:CreateWindow(options)
                 PlayClick(config.Sounds)
                 Toggle:Set(not value)
             end)
+            if data.ConfigKey then
+                Window:RegisterConfig(data.ConfigKey, function() return value end, function(v) Toggle:Set(v) end)
+            end
             return Toggle
         end
 
@@ -808,6 +936,9 @@ function ArceusUI:CreateWindow(options)
 
             local Slider = {}
             function Slider:Set(value) SetValue(value) end
+            if data.ConfigKey then
+                Window:RegisterConfig(data.ConfigKey, function() return current end, function(v) Slider:Set(v) end)
+            end
             return Slider
         end
 
@@ -892,7 +1023,83 @@ function ArceusUI:CreateWindow(options)
                 options = newOptions or {}
                 Rebuild()
             end
+            if data.ConfigKey then
+                Window:RegisterConfig(data.ConfigKey, function() return selected end, function(v) Dropdown:Set(v) end)
+            end
             return Dropdown
+        end
+
+
+        ----------------------------------------------------------------
+        -- MULTI DROPDOWN
+        ----------------------------------------------------------------
+        function Tab:CreateMultiDropdown(data)
+            data=data or {}
+            local options=data.Options or {}
+            local selected={}
+            local holder=Create("Frame",{BackgroundColor3=Color3.fromRGB(35,35,40),Size=UDim2.new(1,0,0,44),ClipsDescendants=true,ZIndex=5},Page)
+            Corner(holder,8)
+            local button=Create("TextButton",{BackgroundTransparency=1,Size=UDim2.new(1,0,0,44),AutoButtonColor=false,Font=Enum.Font.GothamMedium,Text="",TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=6},holder)
+            local list=Create("Frame",{BackgroundTransparency=1,Position=UDim2.fromOffset(8,48),Size=UDim2.new(1,-16,0,0),ZIndex=6},holder)
+            local layout=Create("UIListLayout",{Padding=UDim.new(0,5)},list)
+            local function count() local n=0 for _ in pairs(selected) do n+=1 end return n end
+            local function refreshText() local names={} for _,o in ipairs(options) do if selected[o] then table.insert(names,tostring(o)) end end button.Text=(data.Name or "Multi Dropdown").."   •   "..( #names>0 and table.concat(names,", ") or "None") end
+            local function rebuild()
+                for _,c in ipairs(list:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+                for _,o in ipairs(options) do
+                    local b=Create("TextButton",{BackgroundColor3=selected[o] and Color3.fromRGB(75,65,100) or Color3.fromRGB(45,45,50),Size=UDim2.new(1,0,0,30),AutoButtonColor=false,Font=Enum.Font.Gotham,Text=tostring(o),TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=7},list)
+                    Corner(b,6)
+                    b.MouseButton1Click:Connect(function()
+                        selected[o]=not selected[o]
+                        b.BackgroundColor3=selected[o] and Color3.fromRGB(75,65,100) or Color3.fromRGB(45,45,50)
+                        refreshText()
+                        if data.Callback then task.spawn(data.Callback,selected) end
+                    end)
+                end
+                refreshText()
+            end
+            rebuild()
+            button.MouseButton1Click:Connect(function()
+                PlayClick(config.Sounds)
+                local open=holder.Size.Y.Offset>44
+                holder.Size=UDim2.new(1,0,0,open and 44 or math.min(44+(#options*35)+8,220))
+            end)
+            local Multi={}
+            function Multi:Set(values)
+                selected={}
+                if type(values)=="table" then for _,v in ipairs(values) do selected[v]=true end end
+                rebuild()
+                if data.Callback then task.spawn(data.Callback,selected) end
+            end
+            function Multi:Get() local out={} for v in pairs(selected) do table.insert(out,v) end return out end
+            function Multi:Refresh(newOptions) options=newOptions or {}; rebuild() end
+            if data.ConfigKey then Window:RegisterConfig(data.ConfigKey,function() return Multi:Get() end,function(v) Multi:Set(v) end) end
+            return Multi
+        end
+
+        ----------------------------------------------------------------
+        -- KEYBIND
+        ----------------------------------------------------------------
+        function Tab:CreateKeybind(data)
+            data=data or {}
+            local key=data.Default or data.Key or Enum.KeyCode.RightShift
+            local holder=Create("Frame",{BackgroundColor3=Color3.fromRGB(35,35,40),Size=UDim2.new(1,0,0,46),ZIndex=5},Page)
+            Corner(holder,8)
+            Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(13,0),Size=UDim2.new(1,-100,1,0),Font=Enum.Font.GothamMedium,Text=data.Name or "Keybind",TextColor3=Color3.new(1,1,1),TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},holder)
+            local button=Create("TextButton",{BackgroundColor3=Color3.fromRGB(45,45,50),Position=UDim2.new(1,-82,.5,-13),Size=UDim2.fromOffset(68,26),AutoButtonColor=false,Font=Enum.Font.GothamMedium,Text=key.Name,TextColor3=Color3.new(1,1,1),TextSize=10,ZIndex=6},holder)
+            Corner(button,7)
+            local listening=false
+            local bind={}
+            local function setKey(k) if typeof(k)=="EnumItem" and k.EnumType==Enum.KeyCode then key=k; button.Text=k.Name end end
+            button.MouseButton1Click:Connect(function() listening=true; button.Text="Press..." end)
+            UserInputService.InputBegan:Connect(function(input,gp)
+                if listening and input.UserInputType==Enum.UserInputType.Keyboard then listening=false; setKey(input.KeyCode); return end
+                if not gp and input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode==key and data.Callback then task.spawn(data.Callback,key) end
+            end)
+            function bind:Set(k) setKey(k) end
+            function bind:Get() return key.Name end
+            if data.ConfigKey then Window:RegisterConfig(data.ConfigKey,function() return key.Name end,function(v) if Enum.KeyCode[v] then bind:Set(Enum.KeyCode[v]) end end) end
+            return bind
         end
 
         ----------------------------------------------------------------
@@ -1109,6 +1316,11 @@ function ArceusUI:CreateWindow(options)
                 R, G, B = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
             end
             function ColorPicker:Get() return currentColor end
+            if data.ConfigKey then
+                Window:RegisterConfig(data.ConfigKey, function() return {R=currentColor.R,G=currentColor.G,B=currentColor.B} end, function(v)
+                    if type(v)=="table" and v.R and v.G and v.B then ColorPicker:Set(Color3.new(v.R,v.G,v.B)) end
+                end)
+            end
             return ColorPicker
         end
 
@@ -1238,6 +1450,9 @@ function ArceusUI:CreateWindow(options)
             function Input:Get()
                 return Box.Text
             end
+            if data.ConfigKey then
+                Window:RegisterConfig(data.ConfigKey, function() return Box.Text end, function(v) Input:Set(v) end)
+            end
 
             return Input
         end
@@ -1257,6 +1472,63 @@ function ArceusUI:CreateWindow(options)
     ----------------------------------------------------------------
     -- WINDOW METHODS
     ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    -- KEY SYSTEM
+    ----------------------------------------------------------------
+    function Window:CreateKeySystem(data)
+        data=data or {}
+        local expected=tostring(data.Key or "")
+        local note=tostring(data.Note or "Enter the key to continue.")
+        local gate=Create("Frame",{Name="KeySystem",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.fromScale(.5,.5),Size=UDim2.fromOffset(330,220),BackgroundColor3=Color3.fromRGB(25,25,28),BorderSizePixel=0,ZIndex=200},ScreenGui)
+        Corner(gate,16); Stroke(gate,config.BorderColor,config.BorderThickness); StartRGB(gate:FindFirstChildOfClass("UIStroke"),config.RGB)
+        Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(20,18),Size=UDim2.new(1,-40,0,25),Font=Enum.Font.GothamBold,Text=tostring(data.Title or "Key System"),TextColor3=Color3.new(1,1,1),TextSize=16,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
+        Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(20,50),Size=UDim2.new(1,-40,0,45),Font=Enum.Font.Gotham,Text=note,TextColor3=Color3.fromRGB(165,165,170),TextSize=11,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
+        local box=Create("TextBox",{BackgroundColor3=Color3.fromRGB(35,35,40),Position=UDim2.fromOffset(20,105),Size=UDim2.new(1,-40,0,38),ClearTextOnFocus=false,Font=Enum.Font.Gotham,PlaceholderText="Enter key...",Text="",TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=201},gate); Corner(box,8)
+        local status=Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(20,145),Size=UDim2.new(1,-40,0,18),Font=Enum.Font.Gotham,Text="",TextColor3=Color3.fromRGB(235,90,90),TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=201},gate)
+        local enter=Create("TextButton",{BackgroundColor3=Color3.fromRGB(75,75,82),Position=UDim2.new(1,-120,1,-48),Size=UDim2.fromOffset(100,34),AutoButtonColor=false,Font=Enum.Font.GothamMedium,Text="Continue",TextColor3=Color3.new(1,1,1),TextSize=11,ZIndex=201},gate); Corner(enter,8)
+        local function verify()
+            if box.Text==expected then gate:Destroy(); Main.Visible=true; Window.KeyUnlocked=true else status.Text="Invalid key." end
+        end
+        enter.MouseButton1Click:Connect(verify)
+        box.FocusLost:Connect(function(enterPressed) if enterPressed then verify() end end)
+        Main.Visible=false
+        return gate
+    end
+
+    ----------------------------------------------------------------
+    -- WATERMARK / FPS / PING
+    ----------------------------------------------------------------
+    function Window:CreateWatermark(data)
+        data=data or {}
+        local holder=Create("Frame",{Name="Watermark",AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-12,0,12),Size=UDim2.fromOffset(220,30),BackgroundColor3=Color3.fromRGB(18,18,21),BackgroundTransparency=.08,ZIndex=150},ScreenGui)
+        Corner(holder,9); Stroke(holder,config.BorderColor,1)
+        local label=Create("TextLabel",{BackgroundTransparency=1,Size=UDim2.new(1,-16,1,0),Position=UDim2.fromOffset(8,0),Font=Enum.Font.GothamMedium,TextColor3=Color3.new(1,1,1),TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=151},holder)
+        local RunService=game:GetService("RunService")
+        local showFPS=data.ShowFPS~=false; local showPing=data.ShowPing~=false; local last=os.clock(); local frames=0; local fps=0
+        local conn=RunService.RenderStepped:Connect(function()
+            frames+=1
+            local now=os.clock()
+            if now-last>=1 then fps=frames/(now-last); frames=0; last=now end
+            local parts={}
+            if data.Prefix then table.insert(parts,tostring(data.Prefix)) end
+            if showFPS then table.insert(parts,"FPS: "..math.floor(fps)) end
+            if showPing then
+                local ping=0
+                pcall(function() ping=math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"] and game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue() or 0) end)
+                table.insert(parts,"Ping: "..ping.."ms")
+            end
+            label.Text=table.concat(parts,"  •  ")
+        end)
+        function holder.DestroyWatermark() conn:Disconnect(); holder:Destroy() end
+        return holder
+    end
+
+    function Window:SetKeybind(keyCode, callback)
+        self._GlobalKeybind=keyCode
+        UserInputService.InputBegan:Connect(function(input,gp) if not gp and input.UserInputType==Enum.UserInputType.Keyboard and input.KeyCode==keyCode and callback then task.spawn(callback) end end)
+    end
+
     function Window:Notify(data)
         ArceusUI:Notify(data)
     end
@@ -1272,6 +1544,10 @@ function ArceusUI:CreateWindow(options)
     function Window:SetSubtitle(text)
         Subtitle.Text = tostring(text)
     end
+
+    if config.KeySystem and type(config.KeySystem)=="table" and config.KeySystem.Enabled then Window:CreateKeySystem(config.KeySystem) end
+    if config.Watermark and type(config.Watermark)=="table" and config.Watermark.Enabled then Window:CreateWatermark(config.Watermark) end
+    if config.Theme and THEMES[config.Theme] then Window:SetTheme(config.Theme) end
 
     Library.Windows[#Library.Windows + 1] = Window
     return Window
