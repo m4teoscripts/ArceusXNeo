@@ -159,29 +159,34 @@ function ArceusUI:Notify(data)
             BackgroundTransparency = 1,
             AnchorPoint = Vector2.new(1, 1),
             Position = UDim2.new(1, -15, 1, -15),
-            Size = UDim2.fromOffset(300, 500),
-            ZIndex = 100
+            Size = UDim2.fromOffset(320, 520),
+            ZIndex = 100,
+            ClipsDescendants = false
         }, gui)
         Create("UIListLayout", {
             FillDirection = Enum.FillDirection.Vertical,
             VerticalAlignment = Enum.VerticalAlignment.Bottom,
             HorizontalAlignment = Enum.HorizontalAlignment.Right,
-            Padding = UDim.new(0, 8)
+            Padding = UDim.new(0, 8),
+            SortOrder = Enum.SortOrder.LayoutOrder
         }, holder)
     end
 
     local notification = Create("Frame", {
         BackgroundColor3 = Color3.fromRGB(30, 30, 34),
-        BackgroundTransparency = 0.04,
-        Size = UDim2.fromOffset(285, 70),
-        Position = UDim2.fromOffset(320, 0),
+        BackgroundTransparency = 1,
+        Size = UDim2.fromOffset(285, 72),
+        Position = UDim2.fromOffset(330, 0),
         ZIndex = 101
     }, holder)
-    Corner(notification, 9)
+    Corner(notification, 11)
     Stroke(notification, Color3.fromRGB(75, 75, 80), 1)
+
+    local scale = Create("UIScale", {Scale = 0.88}, notification)
 
     local titleLabel = Create("TextLabel", {
         BackgroundTransparency = 1,
+        TextTransparency = 1,
         Position = UDim2.fromOffset(14, 8),
         Size = UDim2.new(1, -25, 0, 20),
         Font = Enum.Font.GothamBold,
@@ -194,6 +199,7 @@ function ArceusUI:Notify(data)
 
     local contentLabel = Create("TextLabel", {
         BackgroundTransparency = 1,
+        TextTransparency = 1,
         Position = UDim2.fromOffset(14, 30),
         Size = UDim2.new(1, -25, 0, 30),
         Font = Enum.Font.Gotham,
@@ -205,14 +211,28 @@ function ArceusUI:Notify(data)
         ZIndex = 102
     }, notification)
 
-    Tween(notification, {Position = UDim2.fromOffset(0, 0)}, 0.3)
+    local progress = Create("Frame", {
+        BackgroundColor3 = Color3.fromRGB(120, 120, 125),
+        BackgroundTransparency = 0.15,
+        Position = UDim2.fromOffset(14, 63),
+        Size = UDim2.new(0, 0, 0, 3),
+        ZIndex = 103
+    }, notification)
+    Corner(progress, 2)
 
-    task.delay(data.Duration or 3, function()
+    local duration = math.max(0.8, tonumber(data.Duration) or 3)
+    Tween(notification, {Position = UDim2.fromOffset(0, 0), BackgroundTransparency = 0.04}, 0.32, Enum.EasingStyle.Quint)
+    Tween(scale, {Scale = 1}, 0.32, Enum.EasingStyle.Back)
+    Tween(titleLabel, {TextTransparency = 0}, 0.22)
+    Tween(contentLabel, {TextTransparency = 0}, 0.28)
+    Tween(progress, {Size = UDim2.new(1, -28, 0, 3)}, duration, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+
+    task.delay(duration, function()
         if notification and notification.Parent then
-            Tween(notification, {
-                Position = UDim2.fromOffset(320, 0),
-                BackgroundTransparency = 1
-            }, 0.25)
+            Tween(notification, {Position = UDim2.fromOffset(330, 0), BackgroundTransparency = 1}, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+            Tween(scale, {Scale = 0.88}, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+            Tween(titleLabel, {TextTransparency = 1}, 0.18)
+            Tween(contentLabel, {TextTransparency = 1}, 0.18)
             task.wait(0.3)
             if notification then notification:Destroy() end
         end
@@ -236,23 +256,10 @@ function ArceusUI:CreateWindow(options)
     if not ScreenGui.Parent then ScreenGui.Parent = PlayerGui end
     self.ScreenGui = ScreenGui
 
-    -- Un único contenedor exterior con el mismo tamaño y radio que la GUI.
-    -- Esto evita las "orillas salientes" del borde anterior.
+    -- Borde integrado en la misma ventana.
+    -- El UIStroke comparte exactamente el mismo UICorner que Main,
+    -- evitando cualquier "punta" o borde saliente en las esquinas.
     local borderSize = config.Size
-
-    local BorderFrame = Create("Frame", {
-        Name = "ExteriorBorder",
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = config.Position,
-        Size = UDim2.fromOffset(0, 0),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ClipsDescendants = false,
-        ZIndex = 4
-    }, ScreenGui)
-    Corner(BorderFrame, 16)
-    local BorderStroke = Stroke(BorderFrame, Color3.fromRGB(100, 100, 100), 1.5)
-    StartRGB(BorderStroke, config.RGB)
 
     local Main = Create("Frame", {
         Name = "Main",
@@ -264,7 +271,10 @@ function ArceusUI:CreateWindow(options)
         ClipsDescendants = true,
         ZIndex = 2
     }, ScreenGui)
-    Corner(Main, 16)
+    Corner(Main, 18)
+    local BorderStroke = Stroke(Main, Color3.fromRGB(100, 100, 100), 1.5)
+    StartRGB(BorderStroke, config.RGB)
+    local BorderFrame = Main
 
     ----------------------------------------------------------------
     -- TOP BAR
@@ -433,7 +443,6 @@ function ArceusUI:CreateWindow(options)
                 startPosition.Y.Offset + delta.Y
             )
             Main.Position = newPosition
-            BorderFrame.Position = newPosition
         end
     end)
 
@@ -441,9 +450,7 @@ function ArceusUI:CreateWindow(options)
     -- OPEN ANIMATION
     ----------------------------------------------------------------
     Main.Size = UDim2.fromOffset(20, 20)
-    BorderFrame.Size = UDim2.fromOffset(24, 24)
     Tween(Main, {Size = config.Size}, 0.38, Enum.EasingStyle.Back)
-    Tween(BorderFrame, {Size = borderSize}, 0.38, Enum.EasingStyle.Back)
 
 
     local minimized = false
@@ -458,7 +465,6 @@ function ArceusUI:CreateWindow(options)
         minimized = true
 
         Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
-        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
         task.wait(0.25)
 
         Main.Visible = false
@@ -478,9 +484,7 @@ function ArceusUI:CreateWindow(options)
         Main.Visible = true
         BorderFrame.Visible = true
         Main.Size = UDim2.fromOffset(0, 0)
-        BorderFrame.Size = UDim2.fromOffset(4, 4)
         Tween(Main, {Size = config.Size}, 0.32, Enum.EasingStyle.Back)
-        Tween(BorderFrame, {Size = borderSize}, 0.32, Enum.EasingStyle.Back)
         minimized = false
     end)
 
@@ -492,7 +496,6 @@ function ArceusUI:CreateWindow(options)
         PlayClick(config.Sounds)
         closed = true
         Tween(Main, {Size = UDim2.fromOffset(0, 0)}, 0.25)
-        Tween(BorderFrame, {Size = UDim2.fromOffset(4, 4)}, 0.25)
         task.wait(0.25)
         if ScreenGui then ScreenGui:Destroy() end
     end)
@@ -1007,8 +1010,9 @@ function ArceusUI:CreateWindow(options)
                 Position = UDim2.fromScale(0.5, 0.5),
                 Size = UDim2.fromOffset(0, 0),
                 Visible = false,
-                ZIndex = 80
-            }, ScreenGui)
+                ZIndex = 80,
+                ClipsDescendants = true
+            }, Main)
             Corner(Modal, 10)
             local ModalStroke = Stroke(Modal, Color3.fromRGB(100, 100, 100), 1.5)
             StartRGB(ModalStroke, config.RGB)
@@ -1126,14 +1130,40 @@ function ArceusUI:CreateWindow(options)
             }, Modal)
             Corner(Accept, 7)
 
+            local function PositionModal()
+                if not Holder.Parent or not Main.Parent then return end
+                local holderX = Holder.AbsolutePosition.X - Main.AbsolutePosition.X
+                local holderY = Holder.AbsolutePosition.Y - Main.AbsolutePosition.Y
+                local popupW, popupH = 310, 225
+                local x = math.clamp(holderX + Holder.AbsoluteSize.X - popupW, 10, math.max(10, Main.AbsoluteSize.X - popupW - 10))
+                local below = holderY + Holder.AbsoluteSize.Y + 8
+                local above = holderY - popupH - 8
+                local y
+                if below + popupH <= Main.AbsoluteSize.Y - 8 then
+                    y = below
+                else
+                    y = math.max(108, above)
+                end
+                y = math.clamp(y, 108, math.max(108, Main.AbsoluteSize.Y - popupH - 8))
+                Modal.Position = UDim2.fromOffset(x, y)
+            end
+
             local function CloseModal()
                 Tween(Modal, {Size = UDim2.fromOffset(0, 0)}, 0.2)
                 task.wait(0.2)
                 Modal.Visible = false
             end
 
+            Main:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+                if Modal.Visible then PositionModal() end
+            end)
+            Page:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+                if Modal.Visible then PositionModal() end
+            end)
+
             Preview.MouseButton1Click:Connect(function()
                 PlayClick(config.Sounds)
+                PositionModal()
                 Modal.Visible = true
                 Modal.Size = UDim2.fromOffset(0, 0)
                 Tween(Modal, {Size = UDim2.fromOffset(310, 225)}, 0.28, Enum.EasingStyle.Back)
