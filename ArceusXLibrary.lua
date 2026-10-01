@@ -336,9 +336,16 @@ function ArceusUI:CreateWindow(options)
     }, TopBar)
     Corner(SearchBox, 8)
     Stroke(SearchBox, Color3.fromRGB(65, 65, 72), 1)
+    local SearchIcon = Create("ImageButton", {
+        BackgroundTransparency = 1, Position = UDim2.new(1, -99, 0, 18),
+        Size = UDim2.fromOffset(16, 16), AutoButtonColor = false,
+        Image = "rbxassetid://6031154871", ImageColor3 = Color3.fromRGB(160,160,165), ZIndex = 6
+    }, TopBar)
+    SearchIcon.MouseButton1Click:Connect(function() SearchBox:CaptureFocus() end)
     local searchExpanded = false
     SearchBox.Focused:Connect(function()
         searchExpanded = true
+        SearchIcon.Visible = false
         Tween(SearchBox, {Position = UDim2.new(1, -154, 0, 12), Size = UDim2.fromOffset(72, 28)}, 0.18)
         SearchBox.TextXAlignment = Enum.TextXAlignment.Left
         SearchBox.PlaceholderText = "Search"
@@ -347,7 +354,8 @@ function ArceusUI:CreateWindow(options)
         if SearchBox.Text == "" then
             searchExpanded = false
             SearchBox.TextXAlignment = Enum.TextXAlignment.Center
-            SearchBox.PlaceholderText = "⌕"
+            SearchBox.PlaceholderText = ""
+            SearchIcon.Visible = true
             Tween(SearchBox, {Position = UDim2.new(1, -106, 0, 12), Size = UDim2.fromOffset(28, 28)}, 0.18)
         end
     end)
@@ -385,81 +393,22 @@ function ArceusUI:CreateWindow(options)
     }, Main)
 
     ----------------------------------------------------------------
-    -- PROFILE CARD - BOTTOM LEFT
+    -- PROFILE - HEADER
     ----------------------------------------------------------------
-    local ProfileCard
-    local ProfileAvatar
-    local ProfileDisplay
-    local ProfileUsername
-
+    local ProfileCard, ProfileAvatar, ProfileDisplay, ProfileUsername
     if config.ShowProfile ~= false then
-        ProfileCard = Create("Frame", {
-            Name = "ProfileCard",
-            AnchorPoint = Vector2.new(0, 1),
-            Position = UDim2.new(0, 12, 1, -10),
-            Size = UDim2.fromOffset(205, 52),
-            BackgroundColor3 = Color3.fromRGB(31, 31, 35),
-            BackgroundTransparency = 0.04,
-            BorderSizePixel = 0,
-            ZIndex = 20
-        }, Main)
-        Corner(ProfileCard, 12)
-        Stroke(ProfileCard, Color3.fromRGB(55, 55, 62), 1)
-
-        local AvatarHolder = Create("Frame", {
-            BackgroundColor3 = Color3.fromRGB(20, 20, 23),
-            Position = UDim2.fromOffset(7, 6),
-            Size = UDim2.fromOffset(40, 40),
-            ZIndex = 21
-        }, ProfileCard)
-        Corner(AvatarHolder, 20)
-        Stroke(AvatarHolder, Color3.fromRGB(80, 80, 88), 1)
-
-        ProfileAvatar = Create("ImageLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(2, 2),
-            Size = UDim2.fromOffset(36, 36),
-            Image = GetAvatar(config.ProfileImage),
-            ScaleType = Enum.ScaleType.Crop,
-            ImageTransparency = 1,
-            ZIndex = 22
-        }, AvatarHolder)
-        Corner(ProfileAvatar, 18)
-
-        ProfileDisplay = Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(56, 8),
-            Size = UDim2.new(1, -65, 0, 18),
-            Font = Enum.Font.GothamBold,
-            Text = config.ProfileName or LocalPlayer.DisplayName,
-            TextColor3 = Color3.new(1, 1, 1),
-            TextSize = 12,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextTransparency = 1,
-            ZIndex = 22
-        }, ProfileCard)
-
-        ProfileUsername = Create("TextLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(56, 27),
-            Size = UDim2.new(1, -65, 0, 15),
-            Font = Enum.Font.Gotham,
-            Text = config.ProfileUsername or ("@" .. LocalPlayer.Name),
-            TextColor3 = Color3.fromRGB(150, 150, 155),
-            TextSize = 10,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextTransparency = 1,
-            ZIndex = 22
-        }, ProfileCard)
-
-        local Status = Create("Frame", {
-            BackgroundColor3 = Color3.fromRGB(90, 205, 120),
-            Position = UDim2.fromOffset(35, 35),
-            Size = UDim2.fromOffset(9, 9),
-            ZIndex = 23
-        }, AvatarHolder)
-        Corner(Status, 5)
-        Stroke(Status, Color3.fromRGB(25, 25, 28), 1)
+        ProfileCard=Create("Frame",{Name="ProfileCard",BackgroundTransparency=1,Position=UDim2.new(1,-292,0,8),Size=UDim2.fromOffset(88,38),ZIndex=5},TopBar)
+        ProfileAvatar=Create("ImageLabel",{BackgroundColor3=Color3.fromRGB(25,25,28),Position=UDim2.fromOffset(0,1),Size=UDim2.fromOffset(36,36),Image=GetAvatar(config.ProfileImage),ScaleType=Enum.ScaleType.Crop,ZIndex=6},ProfileCard); Corner(ProfileAvatar,18); Stroke(ProfileAvatar,Color3.fromRGB(70,70,78),1)
+        ProfileDisplay=Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(43,2),Size=UDim2.fromOffset(45,15),Font=Enum.Font.GothamBold,Text=config.ProfileName or LocalPlayer.DisplayName,TextColor3=Color3.new(1,1,1),TextSize=9,TextTruncate=Enum.TextTruncate.AtEnd,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},ProfileCard)
+        ProfileUsername=Create("TextLabel",{BackgroundTransparency=1,Position=UDim2.fromOffset(43,18),Size=UDim2.fromOffset(45,13),Font=Enum.Font.Gotham,Text=config.ProfileUsername or ("@"..LocalPlayer.Name),TextColor3=Color3.fromRGB(145,145,150),TextSize=8,TextTruncate=Enum.TextTruncate.AtEnd,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=6},ProfileCard)
+    end
+    ----------------------------------------------------------------
+    -- WATERMARK - HEADER
+    ----------------------------------------------------------------
+    local WatermarkLabel
+    if config.Watermark then
+        local wm=type(config.Watermark)=="table" and config.Watermark or {}
+        WatermarkLabel=Create("TextLabel",{Name="Watermark",BackgroundTransparency=1,Position=UDim2.new(1,-205,0,16),Size=UDim2.fromOffset(55,18),Font=Enum.Font.GothamMedium,Text=tostring(wm.Text or wm.Prefix or "Arceus X"),TextColor3=Color3.fromRGB(150,150,155),TextSize=9,TextTruncate=Enum.TextTruncate.AtEnd,TextXAlignment=Enum.TextXAlignment.Right,ZIndex=5},TopBar)
     end
 
     ----------------------------------------------------------------
@@ -529,15 +478,6 @@ function ArceusUI:CreateWindow(options)
     Tween(Main, {Size = config.Size}, 0.38, Enum.EasingStyle.Back)
     Tween(BorderFrame, {Size = borderSize}, 0.38, Enum.EasingStyle.Back)
 
-    if ProfileCard then
-        ProfileCard.Position = UDim2.new(0, 12, 1, 10)
-        Tween(ProfileCard, {Position = UDim2.new(0, 12, 1, -10)}, 0.45, Enum.EasingStyle.Quint)
-        task.delay(0.12, function()
-            Tween(ProfileAvatar, {ImageTransparency = 0}, 0.28)
-            Tween(ProfileDisplay, {TextTransparency = 0}, 0.28)
-            Tween(ProfileUsername, {TextTransparency = 0}, 0.35)
-        end)
-    end
 
     local minimized = false
     local closed = false
@@ -1063,6 +1003,29 @@ function ArceusUI:CreateWindow(options)
         end
 
         ----------------------------------------------------------------
+        -- MULTI DROPDOWN
+        ----------------------------------------------------------------
+        function Tab:CreateMultiDropdown(data)
+            data=data or {}; local options=data.Options or {}; local selected={}; local opened=false
+            if type(data.Default)=="table" then for k,v in pairs(data.Default) do if type(k)=="number" then selected[tostring(v)]=true elseif v==true then selected[tostring(k)]=true end end end
+            local Holder=Create("Frame",{BackgroundColor3=Color3.fromRGB(35,35,40),Size=UDim2.new(1,0,0,44),ClipsDescendants=true,ZIndex=5},Page); Corner(Holder,8)
+            local MainButton=Create("TextButton",{BackgroundTransparency=1,Size=UDim2.new(1,0,0,44),AutoButtonColor=false,Font=Enum.Font.GothamMedium,TextColor3=Color3.new(1,1,1),TextSize=12,ZIndex=6},Holder)
+            local OptionHolder=Create("Frame",{BackgroundTransparency=1,Position=UDim2.fromOffset(8,48),Size=UDim2.new(1,-16,0,0),ZIndex=6},Holder); Create("UIListLayout",{Padding=UDim.new(0,5)},OptionHolder)
+            local function summary() local picked={}; for _,o in ipairs(options) do if selected[tostring(o)] then table.insert(picked,tostring(o)) end end; MainButton.Text=(data.Name or "Multi Dropdown").."   •   "..(#picked>0 and table.concat(picked,", ") or "None") end
+            local function rebuild()
+                for _,c in ipairs(OptionHolder:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+                for _,option in ipairs(options) do local key=tostring(option); local b=Create("TextButton",{BackgroundColor3=selected[key] and Color3.fromRGB(65,65,72) or Color3.fromRGB(45,45,50),Size=UDim2.new(1,0,0,30),AutoButtonColor=false,Font=Enum.Font.Gotham,Text=(selected[key] and "✓  " or "□  ")..key,TextColor3=Color3.fromRGB(225,225,228),TextSize=11,ZIndex=7},OptionHolder); Corner(b,6); b.MouseButton1Click:Connect(function() selected[key]=not selected[key]; rebuild(); if data.Callback then task.spawn(data.Callback,selected) end end) end; summary()
+            end
+            rebuild(); MainButton.MouseButton1Click:Connect(function() opened=not opened; Tween(Holder,{Size=UDim2.new(1,0,0,opened and (52+#options*35) or 44)},0.2) end)
+            local Multi={}
+            function Multi:Set(values) selected={}; if type(values)=="table" then for k,v in pairs(values) do if type(k)=="number" then selected[tostring(v)]=true elseif v==true then selected[tostring(k)]=true end end end; rebuild(); if data.Callback then task.spawn(data.Callback,selected) end end
+            function Multi:Get() return selected end
+            function Multi:Refresh(newOptions) options=newOptions or {}; rebuild() end
+            if data.ConfigKey then Window:RegisterConfig(data.ConfigKey,function() return selected end,function(v) Multi:Set(v) end) end
+            return Multi
+        end
+
+        ----------------------------------------------------------------
         -- COLOR PICKER
         ----------------------------------------------------------------
         function Tab:CreateColorPicker(data)
@@ -1313,6 +1276,18 @@ function ArceusUI:CreateWindow(options)
     -- KEY SYSTEM
     -- The full Window/Tab tree is created first; this is only an overlay.
     ----------------------------------------------------------------
+    function Window:CreateWatermark(data)
+        data=data or {}
+        local text=tostring(data.Text or data.Prefix or "Arceus X")
+        if WatermarkLabel and WatermarkLabel.Parent then
+            WatermarkLabel.Text=text
+            WatermarkLabel.Visible=data.Enabled ~= false
+            return WatermarkLabel
+        end
+        WatermarkLabel=Create("TextLabel",{Name="Watermark",BackgroundTransparency=1,Position=UDim2.new(1,-205,0,16),Size=UDim2.fromOffset(55,18),Font=Enum.Font.GothamMedium,Text=text,TextColor3=Color3.fromRGB(150,150,155),TextSize=9,TextTruncate=Enum.TextTruncate.AtEnd,TextXAlignment=Enum.TextXAlignment.Right,ZIndex=5},TopBar)
+        return WatermarkLabel
+    end
+
     function Window:CreateKeySystem(data)
         data=data or {}
         local expected=tostring(data.Key or data.KeyValue or "")
